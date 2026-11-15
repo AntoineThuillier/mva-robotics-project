@@ -54,8 +54,9 @@ Chaque phase se termine par une validation. On ne passe à la suivante que si el
 
 **Objectif** : faire tourner MimicKit et comprendre son architecture.
 
-- Installer MimicKit et Newton sur le Mac (`--devices cpu`, à confirmer) pour développer,
-  et sur Narval pour les entraînements longs.
+- Installer MimicKit et Newton sur le Mac (`--devices cpu`, à confirmer) pour développer.
+- Choisir la machine avec GPU NVIDIA pour les entraînements longs (Narval, cluster de
+  Polytechnique ou Colab) : le Mac ne suffira pas pour des centaines de millions d'échantillons.
 - Lire le chemin d'un pas de simulation : `run.py`, puis `char_env.py` /
   `task_steering_env.py`, puis `engines/newton_engine.py`, `amp_agent.py` et `ppo_agent.py`.
 - Lister les classes qu'on garde et celles qu'on remplace.
@@ -70,6 +71,34 @@ Chaque phase se termine par une validation. On ne passe à la suivante que si el
 
 **Ce qu'on obtient** : un schéma de l'architecture MimicKit, et la référence de contrôle
 pour toute la suite.
+
+**État au 15 novembre (Mac, CPU)**
+
+- Installation qui fonctionne :
+
+  ```bash
+  conda create -n mimickit python=3.11
+  conda activate mimickit
+  pip install "newton[examples]==1.0.0" "warp-lang==1.12.1"
+  git clone --depth 1 https://github.com/xbpeng/MimicKit.git reference/MimicKit
+  pip install -r reference/MimicKit/requirements.txt
+  ```
+
+  Puis extraire `assets/`, `motions/`, `models/` et `logs/` de l'archive MimicKit (voir le
+  README) dans `reference/MimicKit/data/`.
+- **Versions de Warp** : Newton 1.0.0 plante avec Warp 1.19 (dès l'import), et le solveur
+  MuJoCo-Warp 3.5.0.2 plante sur CPU avec Warp 1.16 et 1.17. **Seul Warp 1.12.1 fonctionne.**
+- `view_motion` (lecture cinématique de la mocap) : ✅.
+- Modèle pré-entraîné `amp_steering_humanoid_model.pt` sous Newton (240 Hz et 120 Hz) : ❌,
+  le personnage tombe en environ 1 s (27 à 33 pas, contre 300 dans leur log).
+  Explication probable : le modèle a été entraîné sous Isaac Gym (toutes les commandes de
+  leur documentation l'utilisent), et une politique ne se transfère pas telle quelle d'un
+  moteur physique à un autre.
+- Entraînement de leur AMP sur CPU : ✅, mais environ 240 échantillons/s, soit environ 115 h
+  pour 100 M. Le Mac sert donc au développement, pas à l'entraînement.
+- **Suite** : continuer la phase 0 sur un serveur avec GPU NVIDIA, avec Newton. On entraîne
+  nous-mêmes leur AMP pour obtenir la référence de contrôle, puisque leurs modèles
+  pré-entraînés ne marchent pas sous Newton.
 
 ### Phase 1 : les données « positives » du discriminateur (17-19 nov.)
 
@@ -211,7 +240,8 @@ On compare aussi les trois versions : notre AMP, l'AMP de MimicKit et PPO seul.
 ## 6. Risques
 
 - **L'installation de Newton** (phase 0) : si elle échoue, on se replie sur notre pile
-  MuJoCo sur CPU et PyTorch (`scripts/sim_benchmark.py`).
+  MuJoCo sur CPU et PyTorch (un benchmark de cette pile existe dans l'historique git,
+  commit `558e6fb`, `scripts/sim_benchmark.py`).
 - **Un personnage instable** (phase 2) : gains PD, fréquence de la physique, pieds qui
   s'enfoncent dans le sol au démarrage.
 - **Le budget de calcul** : l'article utilise 100 à 300 M d'échantillons par politique,
