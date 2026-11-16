@@ -72,34 +72,6 @@ Chaque phase se termine par une validation. On ne passe à la suivante que si el
 **Ce qu'on obtient** : un schéma de l'architecture MimicKit, et la référence de contrôle
 pour toute la suite.
 
-**État au 15 novembre (Mac, CPU)**
-
-- Installation qui fonctionne :
-
-  ```bash
-  conda create -n mimickit python=3.11
-  conda activate mimickit
-  pip install "newton[examples]==1.0.0" "warp-lang==1.12.1"
-  git clone --depth 1 https://github.com/xbpeng/MimicKit.git reference/MimicKit
-  pip install -r reference/MimicKit/requirements.txt
-  ```
-
-  Puis extraire `assets/`, `motions/`, `models/` et `logs/` de l'archive MimicKit (voir le
-  README) dans `reference/MimicKit/data/`.
-- **Versions de Warp** : Newton 1.0.0 plante avec Warp 1.19 (dès l'import), et le solveur
-  MuJoCo-Warp 3.5.0.2 plante sur CPU avec Warp 1.16 et 1.17. **Seul Warp 1.12.1 fonctionne.**
-- `view_motion` (lecture cinématique de la mocap) : ✅.
-- Modèle pré-entraîné `amp_steering_humanoid_model.pt` sous Newton (240 Hz et 120 Hz) : ❌,
-  le personnage tombe en environ 1 s (27 à 33 pas, contre 300 dans leur log).
-  Explication probable : le modèle a été entraîné sous Isaac Gym (toutes les commandes de
-  leur documentation l'utilisent), et une politique ne se transfère pas telle quelle d'un
-  moteur physique à un autre.
-- Entraînement de leur AMP sur CPU : ✅, mais environ 240 échantillons/s, soit environ 115 h
-  pour 100 M. Le Mac sert donc au développement, pas à l'entraînement.
-- **Suite** : continuer la phase 0 sur un serveur avec GPU NVIDIA, avec Newton. On entraîne
-  nous-mêmes leur AMP pour obtenir la référence de contrôle, puisque leurs modèles
-  pré-entraînés ne marchent pas sous Newton.
-
 ### Phase 1 : les données « positives » du discriminateur (17-19 nov.)
 
 **Objectif** : écrire notre Φ(s) et le tirage des transitions de mocap.
