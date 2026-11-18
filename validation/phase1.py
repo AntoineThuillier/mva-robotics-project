@@ -35,7 +35,7 @@ os.environ.setdefault("WARP_CACHE_PATH", str(PROJECT / "reference" / "warpcache"
 
 import warp as wp
 
-import envs.env_builder as env_builder
+import load_envs                                      # environments shared by the validation scripts
 from anim.kin_char_model import JointType
 from util import torch_util as tu
 
@@ -49,15 +49,10 @@ VEL_TOLERANCE = 1e-2 # rad/s, float32 (measured: 3e-3 on 256 states)
 
 # ===== build environment ======
 def build_env(num_envs):
-    # env_builder args :
-    #   - env_file: sets the skeleton, key_bodies, episode_length, init pose and the reward weights. The yaml gives the path to: (1) the skeleton file + (2) motion_file, which is a list of clips with their sampling weight (ex - file: "data/motions/humanoid/humanoid_run.pkl" - weight 3.0)
-    #   - engine_file: simulator config: engine_name: newton, control_mode: pos (PD targets), control_freq: 30 (policy steps/s), sim_freq: 240 (physics steps/s) and env_spacing.
-    #   - num_envs: number of parallel copies of the world. Here one tested state per copy
-    #   - device
-    #   - visualize: whether to open a 3D viewer window
-    #   - record_video: whether to record frames to a video
-    env = env_builder.build_env("data/envs/amp_steering_humanoid_env.yaml", "data/engines/newton_engine.yaml",
-                                num_envs, DEVICE, visualize=False)
+    # MimicKit's AMP steering env (data/envs/amp_steering_humanoid_env.yaml), built once per
+    # process by validation/load_envs.py (see steering_env there for the build arguments).
+    # num_envs = number of parallel copies of the world, here one tested state per copy.
+    env = load_envs.steering_env(num_envs)
     eng = env._engine           # Newton engine, with the current state of the characters. Read with get_*, written with set_*
     kin = env._kin_char_model   # The skeleton (body tree + segments + joint types). Provides conversions and forward kinematics.
     ml = env._motion_lib        # 56 clips loaded in memory + pre-computed velocities for each frame.
