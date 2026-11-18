@@ -53,14 +53,15 @@ def phi_paire(s, s_suiv):
     repere = repere_cap(s_suiv)
     return concat(compute_amp_features(s, repere), compute_amp_features(s_suiv, repere))
 
-def mocap_vers_newton(etat):                                    # [NOUS] -> amp/expert.py
-    # Les vitesses de la mocap (MimicKit) et celles de Newton n'ont pas la même convention.
-    # Les états de l'agent sont lus dans Newton : toute vitesse qui vient de la mocap
-    # doit être convertie, sinon D distingue expert et agent par la seule convention.
-    # Positions et rotations : identiques, rien à convertir.
-    for j in articulations_spheriques:
-        etat.dof_vel[j] = rotation(etat.joint_rot[j]) @ etat.dof_vel[j]   # repère enfant -> parent
+def mocap_vers_newton(etat):                                    # [NOUS] -> amp/expert.py, amp/heading_env.py
+    # Les états de l'agent sont lus dans Newton : toute vitesse qui vient de la mocap doit
+    # être dans la convention de Newton, sinon D distingue expert et agent par la seule convention.
+    # Une seule différence (mesurée dans le simulateur, validation/phase2.md, test 2) :
     etat.root_vel += cross(etat.root_ang_vel, rotation(etat.root_rot) @ COM_RACINE)  # origine -> CdM
+    # Positions, rotations, vitesse angulaire de la racine : identiques.
+    # Articulations sphériques : identiques aussi (repère de l'enfant des deux côtés). Ne PAS les
+    # tourner : eval_fk de Newton suppose le repère du parent, mais le solveur, lui, utilise
+    # celui de l'enfant. [À CORRIGER avant la phase 4] amp/expert.py les tourne encore.
     return etat                                                 # COM_RACINE ≈ (0, 0, 0,113), lu dans Newton
 
 def sample_expert_transitions(M, n):                            # -> amp/expert.py, ExpertTransitions
@@ -75,28 +76,33 @@ def sample_expert_transitions(M, n):                            # -> amp/expert.
 # 2. ENVIRONNEMENT TARGET HEADING  (section 7, éq. 11)  -- phase 2
 # =============================================================================
 # [MIMICKIT] physique, PD (actions = cibles en carte exponentielle 3D / angle 1D),
-#            RSI depuis la mocap, détection de chute. Adapté de task_steering_env.py.
+#            RSI depuis la mocap, détection de chute.
+# FAIT : amp/heading_env.py (TaskHeadingEnv hérite de task_steering_env.py de MimicKit),
+#        config configs/amp_heading_humanoid_env.yaml, validation/phase2.py (6 tests OK).
 
 def reset_rsi(envs, M):                                         # [MIMICKIT][NOUS] correction
     # RSI : l'épisode démarre dans un état tiré de la mocap. La couche Newton de MimicKit
-    # (newton_engine.py) y écrit les vitesses SANS conversion : il faut la corriger.
+    # y écrit la vitesse de la racine SANS conversion : on la corrige (_ref_state_init).
     clip, t = M.tirer_clip_et_instant_continu(len(envs))
-    envs.ecrire_etat(mocap_vers_newton(M.etat(clip, t)))
-    envs.eval_fk()        # sinon Newton garde l'ancienne pose ; ne pas lire get_body_vel juste après
+    envs.ecrire_etat(mocap_vers_newton(M.etat(clip, t)))        # seule la racine change
 
 def tirer_goal_initial(envs):                                   # [NOUS]
     envs.v_cible = uniforme(1, 5)                               # [ÉCART] MimicKit : [0,5 ; 5]
     envs.dir_cible = uniforme(-pi, pi)
+    envs.prochaine_maj = envs.temps + uniforme(0.2, 0.5)
 
 def mettre_a_jour_goal(envs):                                   # [NOUS][ÉCART] calendrier DeepMimic
-    # toutes les 0,2 à 0,5 s :
-    envs.dir_cible += normal(0, 0.15)                           # dérive lente
-    if proba(0.01): envs.dir_cible = uniforme(-pi, pi)          # virage brusque
-    if proba(0.02): envs.v_cible   = uniforme(1, 5)             # nouvelle vitesse
+    # quand envs.temps >= envs.prochaine_maj ; probabilités tirées à chaque mise à jour, pas à chaque pas
+    if proba(0.01): envs.dir_cible += uniforme(-pi, pi)         # virage brusque
+    else:           envs.dir_cible += normal(0, 0.15)           # dérive lente
+    if proba(0.02): envs.v_cible = uniforme(1, 5)               # nouvelle vitesse
+    envs.prochaine_maj = envs.temps + uniforme(0.2, 0.5)
 
 def observer_goal(envs):
     delta = envs.dir_cible - cap(envs.etat)
-    return (cos(delta), -sin(delta), envs.v_cible)              # g, entrée de pi et V
+    return (cos(delta), sin(delta), envs.v_cible)               # g, entrée de pi et V
+    # DeepMimic écrit -sin(delta) dans son repère y vertical : même grandeur (direction cible
+    # vue depuis le personnage), MimicKit étant en z vertical
 
 def recompense_tache(envs, com_avant, com_apres):               # [NOUS][ÉCART] version DeepMimic
     v_moy = (com_apres - com_avant) * CONTROL_FREQ              # vitesse moyenne du CdM sur le pas
