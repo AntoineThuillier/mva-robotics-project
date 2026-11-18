@@ -53,10 +53,22 @@ def phi_paire(s, s_suiv):
     repere = repere_cap(s_suiv)
     return concat(compute_amp_features(s, repere), compute_amp_features(s_suiv, repere))
 
-def sample_expert_transitions(M, n):
-    # [MIMICKIT] motion_lib : interpolation et vitesses ; [NOUS] le tirage
-    clip, t = M.tirer_clip_et_instant_continu(n)
-    return phi_paire(M.etat(clip, t - 1 / CONTROL_FREQ), M.etat(clip, t))
+def mocap_vers_newton(etat):                                    # [NOUS] -> amp/expert.py
+    # Les vitesses de la mocap (MimicKit) et celles de Newton n'ont pas la même convention.
+    # Les états de l'agent sont lus dans Newton : toute vitesse qui vient de la mocap
+    # doit être convertie, sinon D distingue expert et agent par la seule convention.
+    # Positions et rotations : identiques, rien à convertir.
+    for j in articulations_spheriques:
+        etat.dof_vel[j] = rotation(etat.joint_rot[j]) @ etat.dof_vel[j]   # repère enfant -> parent
+    etat.root_vel += cross(etat.root_ang_vel, rotation(etat.root_rot) @ COM_RACINE)  # origine -> CdM
+    return etat                                                 # COM_RACINE ≈ (0, 0, 0,113), lu dans Newton
+
+def sample_expert_transitions(M, n):                            # -> amp/expert.py, ExpertTransitions
+    # [MIMICKIT] motion_lib : interpolation et vitesses ; [NOUS] le tirage et la conversion
+    clip, t = M.tirer_clip_et_instant_continu(n, marge=1 / CONTROL_FREQ)   # s et s' dans le même clip
+    s      = mocap_vers_newton(M.etat(clip, t))
+    s_suiv = mocap_vers_newton(M.etat(clip, t + 1 / CONTROL_FREQ))
+    return phi_paire(s, s_suiv)
 
 
 # =============================================================================
@@ -64,6 +76,13 @@ def sample_expert_transitions(M, n):
 # =============================================================================
 # [MIMICKIT] physique, PD (actions = cibles en carte exponentielle 3D / angle 1D),
 #            RSI depuis la mocap, détection de chute. Adapté de task_steering_env.py.
+
+def reset_rsi(envs, M):                                         # [MIMICKIT][NOUS] correction
+    # RSI : l'épisode démarre dans un état tiré de la mocap. La couche Newton de MimicKit
+    # (newton_engine.py) y écrit les vitesses SANS conversion : il faut la corriger.
+    clip, t = M.tirer_clip_et_instant_continu(len(envs))
+    envs.ecrire_etat(mocap_vers_newton(M.etat(clip, t)))
+    envs.eval_fk()        # sinon Newton garde l'ancienne pose ; ne pas lire get_body_vel juste après
 
 def tirer_goal_initial(envs):                                   # [NOUS]
     envs.v_cible = uniforme(1, 5)                               # [ÉCART] MimicKit : [0,5 ; 5]
@@ -110,11 +129,11 @@ for nom in ["Walk", "Run", "Locomotion"]:
 
         n = 0
         while n < BUDGET:
-            # (a) COLLECTE : NUM_ENVS x K pas, reset auto par RSI   [MIMICKIT]
+            # (a) COLLECTE : NUM_ENVS x K pas, reset auto par RSI   [MIMICKIT] + conversion, voir reset_rsi
             for t in range(K):
                 a = pi.echantillonner(s, g)
                 s_suiv = envs.pas(a)                            # 8 pas Newton
-                phi = phi_paire(s, s_suiv)
+                phi = phi_paire(s, s_suiv)                      # s, s_suiv lus dans Newton : déjà dans sa convention
 
                 r_G = recompense_tache(envs, ...)
                 r_S = max(0, 1 - 0.25 * (D(phi) - 1) ** 2)     # éq. 7     [NOUS]
