@@ -1,0 +1,7 @@
+# Test-only engine config (validation/phase2.py, test 2b): no PD control, one physics step
+# per env step (1/240 s), to read the velocity conventions of Newton's solver directly.
+engine_name: "newton"
+control_mode: "none"
+control_freq: 240
+sim_freq: 240
+env_spacing: 5
