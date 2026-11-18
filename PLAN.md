@@ -1,6 +1,6 @@
 # Plan : état d'avancement
 
-Ce fichier suit la structure de `pseudo-code.py` et ne décrit que ce qui est fait (phases 0 et 1).
+Ce fichier suit la structure de `pseudo-code.py` et ne décrit que ce qui est fait (phases 0 à 2).
 Pour les détails, voir `CADRAGE.md` et `validation/phase*.md`.
 
 ## 0. Configuration (phase 0) : fait
@@ -33,20 +33,23 @@ tirées de la mocap.
 
 ### Traduction MimicKit → Newton (nécessaire)
 
-L'agent est lu dans Newton, alors que l'expert vient de la mocap (MimicKit). Les positions
-coïncident, mais **pas les vitesses** :
-- pour les articulations sphériques, MimicKit donne la vitesse angulaire dans le repère de
-  l'enfant, Newton l'attend dans celui du parent (ω_parent = q · ω_enfant) ;
+L'agent est lu dans Newton, alors que l'expert vient de la mocap (MimicKit). Les deux doivent
+être dans la même convention, sinon le discriminateur pourrait distinguer l'expert de l'agent
+par la seule convention des vitesses. **Une seule vitesse diffère** (mesuré dans le simulateur
+en phase 2, `validation/phase2.md`, test 2) :
 - pour la racine, MimicKit donne la vitesse de l'origine du bassin, Newton celle de son centre
-  de masse (v_com = v_origine + ω × r).
+  de masse (v_com = v_origine + ω × r) ;
+- pour les articulations sphériques, les deux utilisent le repère de l'enfant : **rien à
+  convertir**. La phase 1 avait conclu qu'il fallait les tourner vers le repère du parent, parce
+  qu'elle passait par `eval_fk`, qui suppose ce repère, alors que le solveur de Newton, qui fait
+  la simulation, utilise celui de l'enfant.
 
-Sans conversion, l'écart atteint 12 rad/s et 4 m/s. Le discriminateur pourrait alors distinguer
-l'expert de l'agent par la seule convention des vitesses. La couche Newton de MimicKit ne fait
-pas cette conversion, ce qui explique peut-être l'échec du modèle pré-entraîné (non vérifié).
+La couche Newton de MimicKit ne convertit pas la vitesse de la racine.
 
-- Fait : la conversion des transitions expertes (`mocap_velocities_to_newton` dans
-  `amp/expert.py`).
-- **À faire (phase 2)** : la même conversion au démarrage des épisodes depuis la mocap (RSI).
+- Fait : la conversion au démarrage des épisodes (RSI), racine seulement (`amp/heading_env.py`).
+- **À corriger avant la phase 4** : `amp/expert.py` (`mocap_velocities_to_newton`) tourne
+  encore les vitesses des articulations sphériques ; il faut retirer cette rotation et garder la
+  conversion de la racine, puis adapter les tests 1b et 7 de la phase 1.
 
 Autres pièges :
 - après avoir écrit un état dans Newton, il faut appeler `eval_fk`, sinon Newton garde
@@ -60,7 +63,7 @@ Autres pièges :
 - Test 1 : vérifie que Φ calculé sur la mocap est égal à Φ recalculé après avoir placé Newton
   dans le même état.
 - Test 1b : vérifie que les vitesses de chaque corps sont les mêmes dans Newton et dans la mocap,
-  après conversion.
+  après conversion. Passe par `eval_fk` : à revoir avec la correction de `amp/expert.py`.
 - Test 2 : vérifie le contenu de Φ bloc par bloc, en comparant les tailles à DeepMimic et les
   valeurs à MimicKit.
 - Test 3 : trace la vitesse du bassin pour Walk (médiane de 0,9 m/s) et pour Run (médiane de
@@ -76,9 +79,38 @@ Autres pièges :
 visuellement les poses et les vitesses. `notebooks/01_visualisation_mocap.ipynb` sert à explorer
 les données.
 
-## 2. Environnement Target Heading (phase 2) : à faire
+## 2. Environnement Target Heading (phase 2) : fait
 
-Il faudra y appliquer la conversion des vitesses au démarrage des épisodes.
+But : le monde dans lequel la politique agit. Le personnage doit aller dans une direction cible
+à une vitesse cible ; l'environnement donne le goal, calcule la récompense de tâche r_G et
+décide de la fin des épisodes.
+
+- `amp/heading_env.py` : `TaskHeadingEnv` hérite de l'environnement steering de MimicKit
+  (physique, PD, chutes, démarrage depuis la mocap) et ne change que :
+  - le goal g = (direction cible vue depuis le personnage, v*), sans la direction de regard de
+    MimicKit ;
+  - son calendrier, celui de DeepMimic : toutes les 0,2 à 0,5 s, dérive du cap de N(0 ; 0,15),
+    virage brusque avec une probabilité de 0,01, nouvelle v* dans [1, 5] m/s avec une
+    probabilité de 0,02 ;
+  - r_G (éq. 11) sur la vitesse moyenne du centre de masse pendant le pas, 0 si le personnage
+    recule, sans le terme de regard de MimicKit ;
+  - des épisodes de 20 s ;
+  - la vitesse de la racine convertie au démarrage des épisodes.
+- `configs/amp_heading_humanoid_env.yaml` : sa configuration.
+- `validation/load_envs.py` : construit les environnements des scripts de validation, une
+  seule fois par processus.
+
+### Validation : `validation/phase2.py` (tous les tests OK)
+
+- Test 1 : vérifie qu'avec des actions aléatoires le personnage tombe vite (médiane 0,5 s).
+- Test 2 : vérifie les vitesses écrites au démarrage, mesure les conventions du simulateur
+  (en l'air, sans PD, un pas de 1/240 s), et vérifie que le suivi de la mocap reste proche du
+  clip après un pas. Sans politique, le personnage tombe en moins d'une seconde : le critère
+  « quelques secondes » du cadrage a été remplacé.
+- Test 3 : vérifie r_G contre l'éq. 11 calculée à la main, et le centre de masse utilisé.
+- Test 4 : vérifie les statistiques du calendrier du goal contre celles de DeepMimic.
+- Test 5 : vérifie l'observation g.
+- Test 6 : vérifie que les épisodes s'arrêtent à 20 s.
 
 ## 3. Réseaux : à faire
 
