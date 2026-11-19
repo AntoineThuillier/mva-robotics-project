@@ -14,8 +14,8 @@ personnage simulé. Cette phase fournit ce qu'il voit, Φ(s), et les transitions
   rotations des articulations, positions des mains et des pieds, vitesses), exprimé dans le
   repère du cap. `phi_paire(s, s')` donne l'entrée du discriminateur.
 - `expert.py` : tire des transitions de la mocap (`ExpertTransitions`) et convertit leurs
-  vitesses vers la convention de Newton. **Attention** : la conversion des vitesses des
-  articulations sphériques est à retirer, voir `validation/phase2.md`.
+  vitesses vers la convention de Newton (seule la vitesse de la racine change, voir
+  `validation/phase2.md`, test 2).
 - Validation : `validation/phase1.py`, `validation/phase1_view_clip.py`, `validation/phase1.md`.
 
 ## Phase 2 : l'environnement Target Heading

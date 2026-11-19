@@ -19,8 +19,7 @@ state init from the mocap) and only changes what differs from the article:
                   mass (Newton): v_com = v_origin + w x (R r_com). MimicKit writes it unconverted.
                   Joint velocities are NOT converted: Newton's MuJoCo solver integrates
                   spherical joint velocities in the child frame, like the mocap
-                  (validation/phase2.py, test 2b; this differs from amp/expert.py, which
-                  follows Newton's eval_fk, see validation/phase2.md)
+                  (validation/phase2.py, test 2b; same convention as amp/expert.py)
     episode       20 s (configs/amp_heading_humanoid_env.yaml)
 
 Goal observation: DeepMimic writes (cos D, -sin D, v*) with D = target heading - character
@@ -59,6 +58,11 @@ def build_heading_env(num_envs, device, env_file=None, engine_file=DEFAULT_ENGIN
 class TaskHeadingEnv(task_steering_env.TaskSteeringEnv):
 
     def __init__(self, env_config, engine_config, num_envs, device, visualize, record_video=False):
+
+        # Inherit from class "steering" from MimicKit
+        super().__init__(env_config=env_config, engine_config=engine_config, num_envs=num_envs,
+                         device=device, visualize=visualize, record_video=record_video)
+
         self._goal_time_min = float(env_config["goal_update_time_min"])
         self._goal_time_max = float(env_config["goal_update_time_max"])
         self._heading_drift_std = float(env_config["heading_drift_std"])
@@ -75,8 +79,6 @@ class TaskHeadingEnv(task_steering_env.TaskSteeringEnv):
         env_config.setdefault("reward_steering_face_w", 0.0)
         env_config.setdefault("reward_steering_vel_scale", self._reward_vel_scale)
 
-        super().__init__(env_config=env_config, engine_config=engine_config, num_envs=num_envs,
-                         device=device, visualize=visualize, record_video=record_video)
         return
 
     # ---------- buffers ----------

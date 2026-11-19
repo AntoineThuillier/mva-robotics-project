@@ -61,7 +61,7 @@ def mocap_vers_newton(etat):                                    # [NOUS] -> amp/
     # Positions, rotations, vitesse angulaire de la racine : identiques.
     # Articulations sphériques : identiques aussi (repère de l'enfant des deux côtés). Ne PAS les
     # tourner : eval_fk de Newton suppose le repère du parent, mais le solveur, lui, utilise
-    # celui de l'enfant. [À CORRIGER avant la phase 4] amp/expert.py les tourne encore.
+    # celui de l'enfant (validation/phase1.py, test 1b).
     return etat                                                 # COM_RACINE ≈ (0, 0, 0,113), lu dans Newton
 
 def sample_expert_transitions(M, n):                            # -> amp/expert.py, ExpertTransitions

@@ -4,8 +4,16 @@ Validation décrite dans `CADRAGE.md` (section 4, phase 1). Scripts : `validatio
 (tests) et `validation/phase1_view_clip.py` (vidéo d'un clip joué dans Newton).
 Code testé : `amp/disc_features.py` (Φ) et `amp/expert.py` (transitions expertes).
 
-**Bilan : 8 tests sur 8 OK. Φ et le tirage des transitions expertes sont validés. Les vitesses
-de la mocap doivent être converties dans la convention de Newton (c'est fait dans `amp/expert.py`).**
+**Bilan : 8 tests sur 8 OK. Φ et le tirage des transitions expertes sont validés. Seule la
+vitesse de la racine de la mocap doit être convertie dans la convention de Newton (c'est fait
+dans `amp/expert.py`).**
+
+> **Correction (19 nov. 2026, après la phase 2).** La première version de cette phase concluait
+> qu'il fallait aussi tourner les vitesses des articulations sphériques vers le repère du parent.
+> Ce n'est vrai que pour `eval_fk` : le solveur de Newton, qui fait la simulation, utilise le
+> repère de l'enfant, comme la mocap (`validation/phase2.md`, test 2). La rotation a été retirée
+> de `amp/expert.py`, et le test 1b documente maintenant ce piège. Les résultats ci-dessous du
+> test 1b et de la vidéo sont ceux de la version actuelle.
 
 ## Environnement
 
@@ -28,7 +36,7 @@ de la mocap doivent être converties dans la convention de Newton (c'est fait da
 | Test | Critère | Résultat |
 |---|---|---|
 | 1. Φ(mocap) = Φ(simulateur placé dans le même état) | écart < 1e-3 | OK, 1,8e-4 (mains et pieds) |
-| 1b. Vitesses des corps, Newton vs mocap | écart < 1e-2 après conversion | OK, 2,5e-3 rad/s et 1,4e-3 m/s (brutes : 12 rad/s et 4 m/s) |
+| 1b. Vitesses des corps calculées par `eval_fk` vs mocap (piège) | `eval_fk` colle à 1e-2 près seulement si les articulations sont tournées vers le repère du parent | OK, 3,1e-3 rad/s et 1,6e-3 m/s ; convention de l'expert (celle du solveur) : 10,6 rad/s (64 états) |
 | 2. Contenu de Φ vs DeepMimic (tailles) et MimicKit (valeurs) | même contenu | OK, détail plus bas |
 | 3. Vitesse horizontale du bassin par jeu | Walk ≈ 1 m/s, Run entre 1,5 et 5 m/s | OK, médianes 0,92 et 2,42 m/s |
 | 4. Clips et durées vs article, Table 2 | identiques (± 0,5 s) | OK |
@@ -102,19 +110,24 @@ clips `sie`) : la plage « 1,5 à 5 m/s » du cadrage ne vaut que pour le cœur 
 
 `humanoid_run`, 24 frames : positions Newton = mocap à 5e-7 m près. Vitesses des mains et des pieds :
 écart de 3e-6 m/s avec conversion, jusqu'à 5,6 m/s sans. Vidéos : `outputs/phase1/clip_*.mp4`.
+Les flèches de Newton sont calculées par `eval_fk` : les vitesses y sont donc écrites dans la
+convention de `eval_fk` (articulations dans le repère du parent), pas dans celle du solveur.
 
 ## Ce que la phase a révélé
 
-1. **Les vitesses de la mocap et celles de Newton ne sont pas écrites dans la même convention.**
-   - Rotules : MimicKit (`MotionLib`) exprime la vitesse dans le repère de l'enfant (q0⁻¹·q1),
-     Newton l'attend dans celui du parent. Conversion : ω_parent = q · ω_enfant.
-   - Bassin : MimicKit donne la vitesse de l'origine, Newton celle du centre de masse
-     (≈ 11 cm au-dessus). Conversion : v_com = v_origine + ω × r.
+1. **La vitesse du bassin n'est pas écrite dans la même convention dans la mocap et dans Newton.**
+   MimicKit donne la vitesse de l'origine, Newton celle du centre de masse (≈ 11 cm au-dessus).
+   Conversion : v_com = v_origine + ω × r.
+
+   Pour les rotules, MimicKit (`MotionLib`) exprime la vitesse dans le repère de l'enfant
+   (q0⁻¹·q1). Le solveur de Newton aussi (`validation/phase2.md`, test 2) : rien à convertir.
+   Seul `eval_fk` les lit dans le repère du parent, d'où la conclusion erronée de la première
+   version de cette phase (voir la correction en tête).
 
    La couche Newton de MimicKit (`newton_engine.py`) recopie les nombres sans les convertir.
    Sans conversion, le discriminateur verrait une différence systématique sur les vitesses
    entre l'expert et l'agent. La conversion est faite dans `amp/expert.py`
-   (`mocap_velocities_to_newton`) ; **il faudra aussi l'appliquer au démarrage des épisodes (phase 2)**.
+   (`mocap_velocities_to_newton`) et au démarrage des épisodes (`amp/heading_env.py`, phase 2).
 
 2. **`slerp` de MimicKit** (`util/torch_util.py`) : si deux frames diffèrent de moins de 0,002 rad,
    il renvoie la moyenne fixe des deux, et la pose interpolée reste figée pendant la frame.

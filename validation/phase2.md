@@ -133,12 +133,10 @@ viendra des phases 3 et 4.
    **Conséquences :**
    - au démarrage des épisodes, seule la vitesse de la racine doit être convertie : c'est ce que
      fait `amp/heading_env.py` ;
-   - **`amp/expert.py` tourne encore les vitesses des articulations sphériques**
-     (`mocap_velocities_to_newton`, point (a)). Or les états de l'agent, relus dans Newton, ont ces
-     vitesses dans le repère de l'enfant. Les transitions expertes et celles de l'agent n'auraient
-     donc pas la même convention, ce que la phase 1 voulait justement éviter. **À corriger avant la
-     phase 4** : retirer le point (a) et garder le point (b) (racine). Les tests 1b et 7 de la
-     phase 1 sont à revoir en conséquence, puisqu'ils s'appuient sur `eval_fk`.
+   - `amp/expert.py` tournait aussi les vitesses des articulations sphériques. Les transitions
+     expertes et celles de l'agent n'auraient donc pas eu la même convention. **Corrigé
+     (19 nov. 2026)** : la rotation est retirée, seule la conversion de la racine reste. Le test
+     1b de la phase 1 documente maintenant la convention de `eval_fk`, et le test 7 passe toujours.
 
 2. **Le suivi de la mocap sans politique tombe en moins d'une seconde** (voir test 2).
 
