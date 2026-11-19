@@ -102,7 +102,7 @@ décide de la fin des épisodes.
 
 ### Validation : `validation/phase2.py` (tous les tests OK)
 
-- Test 1 : vérifie qu'avec des actions aléatoires le personnage tombe vite (médiane 0,5 s).
+- Test 1 : vérifie qu'avec des actions aléatoires le personnage tombe en moins de 3 s.
 - Test 2 : vérifie les vitesses écrites au démarrage, mesure les conventions du simulateur
   (en l'air, sans PD, un pas de 1/240 s), et vérifie que le suivi de la mocap reste proche du
   clip après un pas. Sans politique, le personnage tombe en moins d'une seconde : le critère
