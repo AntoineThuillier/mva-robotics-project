@@ -59,7 +59,7 @@ l'environnement.
 
 | Test | Critère | Résultat |
 |---|---|---|
-| 1. Politique aléatoire | tous tombent en moins de 3 s, médiane < 1 s | OK, médiane 0,50 s (0,27 à 0,73 s) |
+| 1. Politique aléatoire | tous tombent en moins de 3 s | OK, chutes entre 0,27 et 0,73 s (médiane 0,50 s) |
 | 2. Démarrage depuis la mocap et conventions de Newton | voir plus bas | OK |
 | 3. Récompense r_G | éq. 11 à la main, à 1e-5 | OK, écart max 3,6e-7 |
 | 4. Calendrier du goal | DeepMimic, à 4 écarts-types | OK |

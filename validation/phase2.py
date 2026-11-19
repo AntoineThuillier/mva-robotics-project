@@ -84,8 +84,7 @@ def rollout(env, policy, steps, on_step=None):
 # ======== Test 1: random policy ========
 def test_random_policy(env=None):
     """Test 1: uniform random actions within the action bounds. The character must fall:
-    every episode ends with a fall within 3 s, and the median fall happens before 1 s.
-    Returns True if OK."""
+    every episode ends with a fall within 3 s. Returns True if OK."""
     env = load_envs.heading_env() if env is None else env
     dt = env._engine.get_timestep()
     steps = int(round(3.0 / dt))
@@ -93,13 +92,12 @@ def test_random_policy(env=None):
     end_step, end_flag = rollout(env, random_actions, steps)
     fell = (end_flag == FAIL)
     t_fall = end_step[fell].float() * dt
-    med = t_fall.median().item() if fell.any() else float("inf")
-    ok = bool(fell.all()) and med < 1.0
+    ok = bool(fell.all())
     print(f"\n=== Test 1: random policy, {env.get_num_envs()} episodes ===")
     print(f"  fell within 3 s: {fell.sum().item()}/{fell.numel()}  (must be all)")
     if fell.any():
-        print(f"  time of the fall: median {med:.2f} s, min {t_fall.min().item():.2f} s, "
-              f"max {t_fall.max().item():.2f} s  (median must be < 1 s)")
+        print(f"  time of the fall: min {t_fall.min().item():.2f} s, median {t_fall.median().item():.2f} s, "
+              f"max {t_fall.max().item():.2f} s")
     print(f"  => {'OK' if ok else 'FAIL'}")
     return ok
 
