@@ -10,7 +10,7 @@ instant (frames are interpolated by MimicKit's MotionLib). Both states go throug
 Velocities are converted to Newton's conventions first (`mocap_velocities_to_newton`):
 the agent's states are read from Newton, so the expert states must speak the same
 language, otherwise the discriminator could tell them apart from the velocity
-convention alone (see validation/phase1.py, test 1b).
+convention alone. Only the root linear velocity differs (validation/phase2.md, test 2).
 
 Like disc_features.py, import with MimicKit's `mimickit/` folder in sys.path.
 """
@@ -19,7 +19,6 @@ import torch
 import warp as wp
 
 import util.torch_util as torch_util
-from anim.kin_char_model import JointType
 
 from amp.disc_features import EtatPerso
 
@@ -38,16 +37,13 @@ def root_com_from_engine(engine, char_id=0):
 def mocap_velocities_to_newton(kin_char_model, root_com, root_rot, root_vel, root_ang_vel, joint_rot, dof_vel):
     """Mocap velocities (MimicKit conventions) -> Newton's conventions. Returns (root_vel, dof_vel).
 
-    (a) spherical joints: MimicKit gives the joint angular velocity in the child frame
-        (q0⁻¹·q1), Newton expects it in the parent frame: ω_parent = q · ω_child.
-    (b) root: MimicKit gives the velocity of the root origin, Newton the velocity of the
-        root center of mass: v_com = v_origin + ω × (R · root_com).
-    Hinge joints and the root angular velocity are the same in both."""
-    dof_vel = dof_vel.clone()
-    for j in range(1, kin_char_model.get_num_joints()):
-        if kin_char_model.get_joint(j).joint_type == JointType.SPHERICAL:
-            i = kin_char_model.get_joint_dof_idx(j)
-            dof_vel[..., i:i + 3] = torch_util.quat_rotate(joint_rot[..., j - 1, :], dof_vel[..., i:i + 3])
+    Root: MimicKit gives the velocity of the root origin, Newton the velocity of the root
+    center of mass: v_com = v_origin + ω × (R · root_com).
+    Joints: unchanged. Newton's solver integrates and reads back spherical joint velocities
+    in the child frame (q0⁻¹·q1), like the mocap (measured in validation/phase2.py, test 2).
+    Only Newton's eval_fk reads them in the parent frame (validation/phase1.py, test 1b), and
+    it is not used to simulate. Hinge joints and the root angular velocity are the same in both.
+    `kin_char_model` and `joint_rot` are kept in the signature for the callers; unused."""
     r = torch_util.quat_rotate(root_rot, root_com.to(root_rot).expand(root_rot.shape[:-1] + (3,)))
     root_vel = root_vel + torch.cross(root_ang_vel, r, dim=-1)
     return root_vel, dof_vel

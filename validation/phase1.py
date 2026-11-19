@@ -2,8 +2,9 @@
 
 Test 1: Φ computed on the mocap == Φ recomputed after putting the Newton
 simulator in the same state.
-Test 1b: velocity of every body computed by Newton == the one implied by the mocap
-velocities, once converted to Newton's conventions.
+Test 1b: velocity of every body computed by Newton's eval_fk vs the one implied by the mocap:
+eval_fk reads spherical joint velocities in the parent frame, unlike Newton's solver
+(child frame, like the mocap). Documents why eval_fk velocities must not be used.
 Test 2: content of Φ, block by block, vs DeepMimic (sizes) and MimicKit (values).
 Test 3: horizontal root speed per dataset, Walk vs Run (figure for the report).
 Test 4: number and duration of the clips vs the article (Table 2).
@@ -200,35 +201,47 @@ def newton_body_origin_vel(eng, kin, cid):
 
 
 def test_ang_vel_mocap_equals_sim(eng, kin, ml, cid, n):
-    """Test 1b: angular velocity of every body, Newton vs mocap.
+    """Test 1b: body velocities computed by Newton's eval_fk vs the mocap. Documents a trap.
 
-    Puts the simulator in n random mocap states, lets Newton compute the velocity of
-    every body (eval_fk), and compares it to `expected_body_ang_vel`. Done twice: with
-    the raw mocap velocities (expected to FAIL: MimicKit and Newton use different
-    conventions) and after `mocap_velocities_to_newton` (expected OK).
+    Puts n random mocap states into Newton, lets eval_fk compute the velocity of every body,
+    and compares it to the exact velocities implied by the mocap (`expected_body_ang_vel`,
+    `expected_body_origin_vel`). Three ways of writing the velocities:
+      - raw mocap velocities;
+      - `mocap_velocities_to_newton` (amp/expert.py): root origin -> center of mass, joints
+        unchanged. This is the convention of Newton's SOLVER (validation/phase2.py, test 2);
+      - the same, plus spherical joint velocities rotated to the parent frame
+        (`eval_fk_joint_velocities`). This is the convention eval_fk assumes.
 
-    Also checks the linear velocity of the origin of every body (rebuilt from Newton's
-    state with `newton_body_origin_vel`), which validates the root velocity conversion.
+    eval_fk only agrees with the mocap in the third case: eval_fk and the solver do not read
+    joint_qd the same way. Phase 1 first concluded from this test that the expert velocities
+    had to be rotated; the solver does not need it. Consequence: never use body velocities
+    computed by eval_fk (nor `newton_body_origin_vel` after a state was written).
 
-    This is the real check of the velocity blocks of Φ, which test 1 cannot see.
-
-    Criterion: max errors < VEL_TOLERANCE (rad/s and m/s) after conversion. Returns True if OK.
+    Criterion: third case within VEL_TOLERANCE (rad/s and m/s), and the expert convention
+    differs from eval_fk by more than 10 x VEL_TOLERANCE on the angular velocities (the trap
+    is still there). Returns True if OK.
     """
     _, _, state = sample_mocap_state(ml, n)
     rp, rr, rv, ra, jr, dv = state
     w_expected = expected_body_ang_vel(kin, state)
     v_expected = expected_body_origin_vel(kin, state)
     rv_newton, dv_newton = mocap_velocities_to_newton(eng, kin, state)
+    dv_fk = eval_fk_joint_velocities(kin, jr, dv_newton)
 
-    print(f"\n=== Test 1b: body velocities, Newton vs mocap, {n} states ===")
+    print(f"\n=== Test 1b: body velocities, Newton's eval_fk vs mocap, {n} states ===")
+    errs = {}
     for label, (rv_x, dv_x) in [("raw mocap velocities", (rv, dv)),
-                                ("converted to Newton", (rv_newton, dv_newton))]:
+                                ("expert (solver) convention", (rv_newton, dv_newton)),
+                                ("eval_fk convention", (rv_newton, dv_fk))]:
         push_to_newton(eng, kin, cid, (rp, rr, rv_x, ra, jr, dv_x))
         err_w = (eng.get_body_ang_vel(cid) - w_expected).norm(dim=-1).max().item()
         err_v = (newton_body_origin_vel(eng, kin, cid) - v_expected).norm(dim=-1).max().item()
-        print(f"  {label:24s} max error: angular {err_w:.2e} rad/s, linear {err_v:.2e} m/s")
-    ok = err_w < VEL_TOLERANCE and err_v < VEL_TOLERANCE
-    print(f"  => {'OK' if ok else 'FAIL'} (after conversion, tolerance {VEL_TOLERANCE:.0e})")
+        errs[label] = (err_w, err_v)
+        print(f"  {label:28s} max error: angular {err_w:.2e} rad/s, linear {err_v:.2e} m/s")
+    w_fk, v_fk = errs["eval_fk convention"]
+    ok = w_fk < VEL_TOLERANCE and v_fk < VEL_TOLERANCE and errs["expert (solver) convention"][0] > 10 * VEL_TOLERANCE
+    print(f"  eval_fk reads spherical joint velocities in the parent frame, the solver in the child frame")
+    print(f"  => {'OK' if ok else 'FAIL'} (eval_fk convention within {VEL_TOLERANCE:.0e}, expert convention differs)")
     return ok
 
 
@@ -237,6 +250,18 @@ def mocap_velocities_to_newton(eng, kin, state):
     function used for training (amp/expert.py). Returns (rv_newton, dv_newton)."""
     rp, rr, rv, ra, jr, dv = state
     return expert.mocap_velocities_to_newton(kin, expert.root_com_from_engine(eng), rr, rv, ra, jr, dv)
+
+
+def eval_fk_joint_velocities(kin, joint_rot, dof_vel):
+    """Spherical joint velocities rotated from the child to the parent frame (ω_parent = q · ω_child):
+    the convention Newton's eval_fk assumes, NOT the one its solver uses. Only for test 1b and
+    phase1_view_clip.py, which read velocities through eval_fk."""
+    dof_vel = dof_vel.clone()
+    for j in range(1, kin.get_num_joints()):
+        if kin.get_joint(j).joint_type == JointType.SPHERICAL:
+            i = kin.get_joint_dof_idx(j)
+            dof_vel[..., i:i + 3] = tu.quat_rotate(joint_rot[..., j - 1, :], dof_vel[..., i:i + 3])
+    return dof_vel
 
 
 # ======== Helpers on the stored mocap frames ========
@@ -602,7 +627,7 @@ def test_expert_transitions(eng, kin, ml, cid, n):
 
 TESTS = {
     "1": "Φ(mocap) == Φ(simulator)",
-    "1b": "body velocities, Newton vs mocap",
+    "1b": "eval_fk velocity convention (trap)",
     "2": "content of Φ vs DeepMimic and MimicKit",
     "3": "root speed per dataset (figure)",
     "4": "clips and durations vs Table 2",

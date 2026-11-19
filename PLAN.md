@@ -46,10 +46,9 @@ en phase 2, `validation/phase2.md`, test 2) :
 
 La couche Newton de MimicKit ne convertit pas la vitesse de la racine.
 
+- Fait : la conversion des transitions expertes, racine seulement (`mocap_velocities_to_newton`
+  dans `amp/expert.py`, corrigé le 19 nov. 2026 : la rotation des articulations est retirée).
 - Fait : la conversion au démarrage des épisodes (RSI), racine seulement (`amp/heading_env.py`).
-- **À corriger avant la phase 4** : `amp/expert.py` (`mocap_velocities_to_newton`) tourne
-  encore les vitesses des articulations sphériques ; il faut retirer cette rotation et garder la
-  conversion de la racine, puis adapter les tests 1b et 7 de la phase 1.
 
 Autres pièges :
 - après avoir écrit un état dans Newton, il faut appeler `eval_fk`, sinon Newton garde
@@ -62,8 +61,9 @@ Autres pièges :
 
 - Test 1 : vérifie que Φ calculé sur la mocap est égal à Φ recalculé après avoir placé Newton
   dans le même état.
-- Test 1b : vérifie que les vitesses de chaque corps sont les mêmes dans Newton et dans la mocap,
-  après conversion. Passe par `eval_fk` : à revoir avec la correction de `amp/expert.py`.
+- Test 1b : documente un piège. `eval_fk` lit les vitesses des articulations sphériques dans le
+  repère du parent, alors que le solveur les lit dans celui de l'enfant ; il ne faut donc pas
+  utiliser les vitesses des corps calculées par `eval_fk`.
 - Test 2 : vérifie le contenu de Φ bloc par bloc, en comparant les tailles à DeepMimic et les
   valeurs à MimicKit.
 - Test 3 : trace la vitesse du bassin pour Walk (médiane de 0,9 m/s) et pour Run (médiane de

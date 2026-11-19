@@ -1,7 +1,7 @@
 """Plays a mocap clip through the Newton simulator and renders it to an mp4 (no display needed).
 
-Each frame of the clip is written into Newton (pose + velocities converted to Newton's
-conventions), Newton computes the bodies (eval_fk, no physics step), and we draw:
+Each frame of the clip is written into Newton (pose + velocities in the convention of Newton's
+eval_fk), Newton computes the bodies (eval_fk, no physics step), and we draw:
 
   - the skeleton as computed by Newton (blue), over the mocap skeleton (thin grey):
     they must coincide;
@@ -14,6 +14,10 @@ conventions), Newton computes the bodies (eval_fk, no physics step), and we draw
     python validation/phase1_view_clip.py --clip humanoid_walk
     python validation/phase1_view_clip.py --clip sie/humanoid_sie_run_left12 --max_frames 240
     python validation/phase1_view_clip.py --raw                    # without the velocity conversion
+
+The velocities are written in eval_fk's convention (root center of mass, spherical joints in
+the parent frame), because the arrows are computed by eval_fk. The simulator itself reads
+spherical joint velocities in the child frame (see phase1.py, test 1b, and phase2.md, test 2).
 
 Output: outputs/phase1/clip_<name>[_raw].mp4. Run from the project root, with .venv.
 """
@@ -78,6 +82,7 @@ def main():
         rv_x, dv_x = rv, dv
     else:
         rv_x, dv_x = p1.mocap_velocities_to_newton(eng, kin, state)
+        dv_x = p1.eval_fk_joint_velocities(kin, jr, dv_x)      # the arrows are computed by eval_fk
     p1.push_to_newton(eng, kin, cid, (rp, rr, rv_x, ra, jr, dv_x))
 
     bp_newton = eng.get_body_pos(cid)
