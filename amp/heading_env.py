@@ -30,6 +30,8 @@ Like the rest of amp/, import with MimicKit's `mimickit/` folder in sys.path, an
 MimicKit's root (its config files use relative paths).
 """
 
+from pathlib import Path
+
 import numpy as np
 import torch
 import warp as wp
@@ -39,18 +41,23 @@ import envs.smp_env as smp_env
 import envs.task_steering_env as task_steering_env
 import util.torch_util as torch_util
 
+PROJECT = Path(__file__).resolve().parents[1]
 DEFAULT_ENV_FILE = "configs/amp_heading_humanoid_env.yaml"     # relative to the project root
 DEFAULT_ENGINE_FILE = "data/engines/newton_engine.yaml"         # relative to MimicKit's root
 
 
 def build_heading_env(num_envs, device, env_file=None, engine_file=DEFAULT_ENGINE_FILE,
                       visualize=False, record_video=False):
-    """MimicKit's env_builder only knows MimicKit's envs: build ours directly."""
+    """MimicKit's env_builder only knows MimicKit's envs: build ours directly.
+
+    num_envs must be a power of 2: with other counts (40, 48, 100 measured), the ground contact
+    sensor of Newton/MimicKit returns zero forces for part of the envs, so their falls are never
+    detected (validation/phase3.md). 1, 16, 32, 64 and 4096 work."""
+    assert num_envs > 0 and num_envs & (num_envs - 1) == 0, \
+        f"num_envs must be a power of 2 (fall detection is broken otherwise), got {num_envs}"
     if env_file is None:
-        from pathlib import Path
-        env_file = str(Path(__file__).resolve().parents[1] / DEFAULT_ENV_FILE)
+        env_file = str(PROJECT / DEFAULT_ENV_FILE)
     env_config, engine_config = env_builder.load_configs(env_file, engine_file)
-    assert env_config["env_name"] == "task_heading", env_config["env_name"]
     return TaskHeadingEnv(env_config=env_config, engine_config=engine_config, num_envs=num_envs,
                           device=device, visualize=visualize, record_video=record_video)
 
@@ -59,12 +66,6 @@ class TaskHeadingEnv(task_steering_env.TaskSteeringEnv):
 
     def __init__(self, env_config, engine_config, num_envs, device, visualize, record_video=False):
 
-        # Inherit from class "steering" from MimicKit
-        super().__init__(env_config=env_config, engine_config=engine_config, num_envs=num_envs,
-                         device=device, visualize=visualize, record_video=record_video)
-
-        self._goal_time_min = float(env_config["goal_update_time_min"])
-        self._goal_time_max = float(env_config["goal_update_time_max"])
         self._heading_drift_std = float(env_config["heading_drift_std"])
         self._sharp_turn_prob = float(env_config["sharp_turn_prob"])
         self._speed_change_prob = float(env_config["speed_change_prob"])
@@ -73,12 +74,13 @@ class TaskHeadingEnv(task_steering_env.TaskSteeringEnv):
 
         # keys TaskSteeringEnv reads but that we do not use
         env_config = dict(env_config)
-        env_config.setdefault("tar_change_time_min", self._goal_time_min)
-        env_config.setdefault("tar_change_time_max", self._goal_time_max)
         env_config.setdefault("reward_steering_tar_w", 1.0)
         env_config.setdefault("reward_steering_face_w", 0.0)
         env_config.setdefault("reward_steering_vel_scale", self._reward_vel_scale)
 
+        # Inherit from class "steering" from MimicKit
+        super().__init__(env_config=env_config, engine_config=engine_config, num_envs=num_envs,
+                         device=device, visualize=visualize, record_video=record_video)
         return
 
     # ---------- buffers ----------
@@ -133,12 +135,7 @@ class TaskHeadingEnv(task_steering_env.TaskSteeringEnv):
         self._sync_tar_dir(env_ids)
         return
 
-    def _reset_task(self, env_ids):
-        self._reset_tar(env_ids)
-        self._tar_change_times[env_ids] = self._time_buf[env_ids] + self._rand_update_delay(env_ids.shape[0])
-        if self._visualize:
-            self._update_marker(env_ids)
-        return
+    # _reset_task: MimicKit's (_reset_tar, then next update in U(tar_change_time_min, max))
 
     def _update_task(self):
         env_ids = (self._time_buf >= self._tar_change_times).nonzero(as_tuple=False).flatten()
@@ -170,7 +167,7 @@ class TaskHeadingEnv(task_steering_env.TaskSteeringEnv):
         return self._tar_speed_min + (self._tar_speed_max - self._tar_speed_min) * torch.rand(n, device=self._device)
 
     def _rand_update_delay(self, n):
-        return self._goal_time_min + (self._goal_time_max - self._goal_time_min) * torch.rand(n, device=self._device)
+        return self._tar_change_time_min + (self._tar_change_time_max - self._tar_change_time_min) * torch.rand(n, device=self._device)
 
     # ---------- observation: character state (MimicKit) + g ----------
     def _compute_obs(self, env_ids=None):
