@@ -8,7 +8,12 @@ length v*, orange: COM velocity, text: v*, speed along the target, r_G). Two mp4
     scripted.mp4   a readable script: 2 m/s straight, then a 90 deg turn at 4 s, 4 m/s at 8 s,
                    a 135 deg turn at 12 s, 1 m/s at 16 s
 
+With --fixed_goal, only one video instead:
+
+    fixed_goal.mp4 a fixed goal for the whole episode: 90 deg to the left of the character, 4 m/s
+
     python validation/phase3_videos.py
+    python validation/phase3_videos.py --fixed_goal
     python validation/phase3_videos.py --run_dir outputs/phase3/smoke --seconds 6
 
 Run from the project root, with the project venv (.venv).
@@ -36,16 +41,17 @@ SCRIPT = [  # (time in s, heading change in rad, new v* or None)
     (12.0, -3 * math.pi / 4, None),
     (16.0, 0.0, 1.0),
 ]
+FIXED_SCRIPT = [(0.0, math.pi / 2, 4.0)]
 
 
-def scripted(env, policy):
-    """Wraps the policy: freezes the goal schedule and applies SCRIPT before each step."""
+def scripted(env, policy, script):
+    """Wraps the policy: freezes the goal schedule and applies `script` before each step."""
     env._heading_drift_std, env._sharp_turn_prob, env._speed_change_prob = 0.0, 0.0, 0.0
     done = set()
 
     def wrapped(env_):
         t = env_._time_buf[0].item()
-        for i, (ts, dh, v) in enumerate(SCRIPT):
+        for i, (ts, dh, v) in enumerate(script):
             if i not in done and t >= ts - 1e-6:
                 done.add(i)
                 env_._tar_heading += dh
@@ -62,6 +68,7 @@ def main():
     p.add_argument("--run_dir", default="outputs/phase3/ppo_heading", help="relative to the project root")
     p.add_argument("--model_file", default=None, help="default: <run_dir>/model.pt")
     p.add_argument("--seconds", type=float, default=20.0)
+    p.add_argument("--fixed_goal", action="store_true", help="only fixed_goal.mp4 (FIXED_SCRIPT)")
     args = p.parse_args()
     run_dir = Path(args.run_dir) if Path(args.run_dir).is_absolute() else PROJECT / args.run_dir
 
@@ -73,14 +80,15 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     saved = (env._heading_drift_std, env._sharp_turn_prob, env._speed_change_prob)
 
-    for name in ("schedule", "scripted"):
+    scripts = {"fixed_goal": FIXED_SCRIPT} if args.fixed_goal else {"schedule": None, "scripted": SCRIPT}
+    for name, script in scripts.items():
         torch.manual_seed(0)
         env._heading_drift_std, env._sharp_turn_prob, env._speed_change_prob = saved
         env.reset()
         pol = policy
-        if name == "scripted":
+        if script is not None:
             env._tar_heading[:] = tu.calc_heading(env._ref_root_rot)     # start: the way the character faces
-            pol = scripted(env, policy)
+            pol = scripted(env, policy, script)
         frames = phase2_videos.record(env, pol, args.seconds, show_mocap=False)
         out = out_dir / f"{name}.mp4"
         phase2_videos.render(frames, parents, f"PPO, task reward only ({name} goal)", out, fps=30)
