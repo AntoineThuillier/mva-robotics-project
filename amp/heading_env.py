@@ -48,13 +48,7 @@ DEFAULT_ENGINE_FILE = "data/engines/newton_engine.yaml"         # relative to Mi
 
 def build_heading_env(num_envs, device, env_file=None, engine_file=DEFAULT_ENGINE_FILE,
                       visualize=False, record_video=False):
-    """MimicKit's env_builder only knows MimicKit's envs: build ours directly.
-
-    num_envs must be a power of 2: with other counts (40, 48, 100 measured), the ground contact
-    sensor of Newton/MimicKit returns zero forces for part of the envs, so their falls are never
-    detected (validation/phase3.md). 1, 16, 32, 64 and 4096 work."""
-    assert num_envs > 0 and num_envs & (num_envs - 1) == 0, \
-        f"num_envs must be a power of 2 (fall detection is broken otherwise), got {num_envs}"
+    """MimicKit's env_builder only knows MimicKit's envs: build ours directly."""
     if env_file is None:
         env_file = str(PROJECT / DEFAULT_ENV_FILE)
     env_config, engine_config = env_builder.load_configs(env_file, engine_file)
@@ -81,6 +75,7 @@ class TaskHeadingEnv(task_steering_env.TaskSteeringEnv):
         # Inherit from class "steering" from MimicKit
         super().__init__(env_config=env_config, engine_config=engine_config, num_envs=num_envs,
                          device=device, visualize=visualize, record_video=record_video)
+        sort_contact_sensor_pairs(self._engine._ground_contact_sensor)
         return
 
     # ---------- buffers ----------
@@ -192,6 +187,28 @@ class TaskHeadingEnv(task_steering_env.TaskSteeringEnv):
                                                      self._reward_vel_scale)
         self._prev_com[:] = com
         return
+
+
+# ===================== fix of Newton's contact sensor =====================
+
+def sort_contact_sensor_pairs(sensor):
+    """Fixes fall detection (Newton 1.0.0 bug, TODO-antoine.md). For each contact, the sensor finds
+    its (shape, shape) pair by binary search in a list that must be sorted, but builds that list by
+    concatenating the sorted list of each world. The ground is shape 0, shared by all worlds, so
+    the concatenation is not sorted: some pairs are never found and their ground forces are lost
+    (whole characters for most num_envs that are not powers of 2). Sorts the list globally, with
+    the readings of each pair. Call once, after the env is built."""
+    sp = sensor._sp_sorted.numpy()
+    order = np.lexsort((sp[:, 1], sp[:, 0]))
+    reading = sensor._sp_reading.numpy()
+    offset, count = sensor._sp_ep_offset.numpy(), sensor._sp_ep_count.numpy()
+    new_count = count[order].astype(np.int32)
+    new_reading = np.concatenate([reading[offset[i]:offset[i] + count[i]] for i in order])
+    new_offset = np.concatenate([[0], np.cumsum(new_count)[:-1]]).astype(np.int32)
+    sensor._sp_sorted = wp.array(sp[order], dtype=wp.vec2i, device=sensor.device)
+    sensor._sp_reading = wp.array(new_reading, dtype=wp.vec2i, device=sensor.device)
+    sensor._sp_ep_offset = wp.array(new_offset, dtype=wp.int32, device=sensor.device)
+    sensor._sp_ep_count = wp.array(new_count, dtype=wp.int32, device=sensor.device)
 
 
 # ===================== pure functions (tested in validation/phase2.py) =====================

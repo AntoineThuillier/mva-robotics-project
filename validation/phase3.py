@@ -208,7 +208,7 @@ def main():
     p.add_argument("--run_dir", default="outputs/phase3/ppo_heading", help="relative to the project root")
     p.add_argument("--model_file", default=None, help="default: <run_dir>/model.pt")
     p.add_argument("--num_envs", type=int, default=64,
-                   help="evaluation envs, a power of 2 (tests 2 and 4 use the first 32, test 3 uses 60)")
+                   help="evaluation envs (tests 2 and 4 use the first 32, test 3 uses 60)")
     p.add_argument("--tests", nargs="+", default=list(TESTS), choices=list(TESTS))
     args = p.parse_args()
     run_dir = Path(args.run_dir) if Path(args.run_dir).is_absolute() else PROJECT / args.run_dir
