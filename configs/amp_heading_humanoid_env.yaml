@@ -1,6 +1,5 @@
 # Target Heading environment (amp/heading_env.py), phase 2.
 # Based on MimicKit's data/envs/amp_steering_humanoid_env.yaml; differences are marked [CHANGED].
-# Paths are relative to MimicKit's root (reference/MimicKit), where the scripts run.
 
 env_name: "task_heading"                          # [CHANGED] built by amp.heading_env.build_heading_env
 
@@ -33,8 +32,8 @@ convert_init_vel: True                            # [CHANGED] root velocity: ori
 # goal: DeepMimic, args/train_amp_heading_humanoid3d_locomotion_args.txt and SceneHeadingAMP.cpp
 tar_speed_min: 1.0                                # [CHANGED] m/s (MimicKit: 0.5)
 tar_speed_max: 5.0
-goal_update_time_min: 0.2                         # [CHANGED] s between goal updates (MimicKit: new direction every 4-7 s)
-goal_update_time_max: 0.5
+tar_change_time_min: 0.2                          # [CHANGED] s between goal updates (MimicKit: new direction every 4-7 s)
+tar_change_time_max: 0.5                          #   here each update is a small drift, not a new direction
 heading_drift_std: 0.15                           # rad, per update
 sharp_turn_prob: 0.01                             # per update, new heading = heading + U(-pi, pi)
 speed_change_prob: 0.02                           # per update, new v* = U(tar_speed_min, tar_speed_max)
