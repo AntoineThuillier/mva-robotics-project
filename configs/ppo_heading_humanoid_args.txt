@@ -1,0 +1,19 @@
+# Phase 3: PPO on the Target Heading env, task reward only.
+#     python amp/run.py --arg_file configs/ppo_heading_humanoid_args.txt
+# Arguments given on the command line override the ones below.
+# Paths: relative to the project root if the file exists there (or for out_dir),
+# otherwise relative to MimicKit's root (amp/run.py resolves them).
+
+--mode train
+--num_envs 4096
+--rand_seed 0
+
+--engine_config data/engines/newton_engine.yaml
+--env_config configs/amp_heading_humanoid_env.yaml
+--agent_config configs/ppo_heading_humanoid_agent.yaml
+
+--max_samples 300000000      # ~19k samples/s on an RTX 3070 with 4096 envs: ~5-6 h with the test phases
+--visualize false
+--save_int_models true
+--logger txt
+--out_dir outputs/phase3/ppo_heading
