@@ -1,0 +1,93 @@
+"""Videos of the phase 3 policy (PPO, task reward only) in the Target Heading environment.
+
+Same drawing as validation/phase2_videos.py (blue: character, green: target direction with
+length v*, orange: COM velocity, text: v*, speed along the target, r_G). Two mp4 files in
+<run_dir>/videos/, real time:
+
+    schedule.mp4   the normal goal schedule (DeepMimic: drift, rare turns and speed changes)
+    scripted.mp4   a readable script: 2 m/s straight, then a 90 deg turn at 4 s, 4 m/s at 8 s,
+                   a 135 deg turn at 12 s, 1 m/s at 16 s
+
+    python validation/phase3_videos.py
+    python validation/phase3_videos.py --run_dir outputs/phase3/smoke --seconds 6
+
+Run from the project root, with the project venv (.venv).
+"""
+
+import argparse
+import math
+import sys
+from pathlib import Path
+
+import torch
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import load_envs                           # first: paths, cwd and environment cache
+from load_envs import PROJECT
+from util import torch_util as tu
+
+import phase2_videos
+import phase3
+
+SCRIPT = [  # (time in s, heading change in rad, new v* or None)
+    (0.0, 0.0, 2.0),
+    (4.0, math.pi / 2, None),
+    (8.0, 0.0, 4.0),
+    (12.0, -3 * math.pi / 4, None),
+    (16.0, 0.0, 1.0),
+]
+
+
+def scripted(env, policy):
+    """Wraps the policy: freezes the goal schedule and applies SCRIPT before each step."""
+    env._heading_drift_std, env._sharp_turn_prob, env._speed_change_prob = 0.0, 0.0, 0.0
+    done = set()
+
+    def wrapped(env_):
+        t = env_._time_buf[0].item()
+        for i, (ts, dh, v) in enumerate(SCRIPT):
+            if i not in done and t >= ts - 1e-6:
+                done.add(i)
+                env_._tar_heading += dh
+                if v is not None:
+                    env_._tar_speed[:] = v
+                env_._sync_tar_dir(env_._env_ids)
+                env_._update_observations()      # the policy sees the new goal at this step
+        return policy(env_)
+    return wrapped
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--run_dir", default="outputs/phase3/ppo_heading", help="relative to the project root")
+    p.add_argument("--model_file", default=None, help="default: <run_dir>/model.pt")
+    p.add_argument("--seconds", type=float, default=20.0)
+    args = p.parse_args()
+    run_dir = Path(args.run_dir) if Path(args.run_dir).is_absolute() else PROJECT / args.run_dir
+
+    env = load_envs.heading_env(1)
+    policy = phase3.load_policy(env, run_dir, args.model_file)
+    kin = env._kin_char_model
+    parents = [kin.get_parent_id(j) for j in range(kin.get_num_joints())]
+    out_dir = run_dir / "videos"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    saved = (env._heading_drift_std, env._sharp_turn_prob, env._speed_change_prob)
+
+    for name in ("schedule", "scripted"):
+        torch.manual_seed(0)
+        env._heading_drift_std, env._sharp_turn_prob, env._speed_change_prob = saved
+        env.reset()
+        pol = policy
+        if name == "scripted":
+            env._tar_heading[:] = tu.calc_heading(env._ref_root_rot)     # start: the way the character faces
+            pol = scripted(env, policy)
+        frames = phase2_videos.record(env, pol, args.seconds, show_mocap=False)
+        out = out_dir / f"{name}.mp4"
+        phase2_videos.render(frames, parents, f"PPO, task reward only ({name} goal)", out, fps=30)
+        end = frames[-1]["end"]
+        print(f"{name}: " + (f"episode ended at {end[0] / 30:.2f} s ({end[1]})" if end else "no fall") + f" -> {out}")
+    env._heading_drift_std, env._sharp_turn_prob, env._speed_change_prob = saved
+
+
+if __name__ == "__main__":
+    main()

@@ -33,6 +33,21 @@ tâche r_G (éq. 11) et décide de la fin des épisodes.
   `validation/phase2.md`. Les environnements des tests sont
   construits par `validation/load_envs.py`, une seule fois par processus.
 
+## Phase 3 : PPO seul (récompense de tâche uniquement)
+
+On entraîne une politique avec PPO (celui de MimicKit) sur l'environnement Target Heading, avec
+la seule récompense de tâche r_G, sans discriminateur. Ça valide la boucle d'apprentissage avant
+la phase 4, et donne l'équivalent de la baseline « No Data » de l'article (Fig. 5), à ceci près
+que les épisodes démarrent depuis des poses de la mocap.
+
+- `run.py` : lance l'entraînement ou le test avec le `run.py` de MimicKit, après y avoir
+  enregistré notre environnement (`task_heading`).
+- `../configs/ppo_heading_humanoid_agent.yaml` : l'agent PPO (réglages de l'AMP de MimicKit,
+  sans le discriminateur).
+- `../configs/ppo_heading_humanoid_args.txt` : les arguments du run.
+- Validation : `validation/phase3.py` (sur un dossier de run), `validation/phase3_videos.py`,
+  `validation/phase3.md`.
+
 ## Utilisation
 
 Le code de ce dossier importe les modules de MimicKit. Il faut donc avoir `reference/MimicKit/mimickit`
