@@ -49,29 +49,9 @@ import util.torch_util as torch_util
 AGENT_NAME = "AMP_heading"
 
 
-# ===================== the article's equations (tested in validation/phase4.py, test 2) =====================
-
-def disc_loss_lsgan(d_mocap, d_agent):
-    """Eq. 6, least-squares GAN: D is regressed to +1 on mocap transitions and -1 on the agent's.
-    d_mocap, d_agent: outputs of D (no sigmoid), any shape. Returns a scalar."""
-    return torch.mean((d_mocap - 1) ** 2) + torch.mean((d_agent + 1) ** 2)
-
-
-def gradient_penalty(disc_fn, phi_mocap, w_gp):
-    """Eq. 8, last term: (w_gp / 2) * E_mocap[ ||grad_phi D(phi)||^2 ], on mocap transitions only.
-
-    The gradient is taken with respect to the input of D (the Φ pair, normalized as D sees it),
-    not to D's weights; create_graph=True so that the penalty itself can be minimized over D's
-    weights. disc_fn: phi (n, 210) -> D (n,). Returns a scalar."""
-    phi = phi_mocap.detach().requires_grad_(True)
-    d = disc_fn(phi)
-    grad = torch.autograd.grad(d.sum(), phi, create_graph=True)[0]      # (n, 210): dD/dphi per sample
-    return 0.5 * w_gp * torch.mean(torch.sum(grad ** 2, dim=-1))
-
-
-def style_reward(d):
-    """Eq. 7: r_S = max(0, 1 - 0.25 (D - 1)^2), in [0, 1]: 1 for D = +1 (mocap-like), 0 for D <= -1."""
-    return torch.clamp_min(1 - 0.25 * (d - 1) ** 2, 0.0)
+# the article's equations 6, 7, 8 and the replay buffer: shared with our own PPO (rl/amp.py),
+# tested in validation/phase4.py (test 2)
+from rl.amp import ReplayBuffer, disc_loss_lsgan, gradient_penalty, style_reward  # noqa: E402,F401
 
 
 # ===================== model and agent =====================
@@ -104,28 +84,6 @@ class HeadingAMPModel(ppo_model.PPOModel):
 
     def get_disc_params(self):
         return list(self._disc_layers.parameters()) + list(self._disc_out.parameters())
-
-
-class ReplayBuffer:
-    """FIFO of agent disc observations (the article's B): the oldest pairs are overwritten."""
-
-    def __init__(self, size, dim, device):
-        self._data = torch.zeros(size, dim, device=device)
-        self._head = 0
-        self._count = 0
-
-    def push(self, x):
-        n, size = x.shape[0], self._data.shape[0]
-        idx = (self._head + torch.arange(n, device=x.device)) % size
-        self._data[idx] = x
-        self._head = (self._head + n) % size
-        self._count = min(self._count + n, size)
-
-    def sample(self, n):
-        return self._data[torch.randint(0, self._count, (n,), device=self._data.device)]
-
-    def __len__(self):
-        return self._count
 
 
 class HeadingAMPAgent(ppo_agent.PPOAgent):

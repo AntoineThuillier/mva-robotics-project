@@ -3,6 +3,10 @@
     python rl/train.py --agent_config configs/ppo_heading_humanoid_agent.yaml --out_dir outputs/rl/ppo_heading
     python rl/train.py --agent_config configs/ppo_heading_humanoid_agent.yaml --max_samples 2e6 --out_dir outputs/rl/smoke
     python rl/train.py --mode test --model_file outputs/rl/ppo_heading/model.pt --num_envs 64
+    python rl/train.py --agent_config configs/amp_heading_humanoid_agent.yaml --out_dir outputs/rl/amp_heading
+
+The agent config chooses the trainer: PPO only (Trainer below), or AMP (rl/amp.py) when it has
+the discriminator settings (disc_optimizer, ...).
 
 One iteration (as MimicKit):
   1. rollout: steps_per_iter policy steps on all environments, actions sampled from pi; an
@@ -32,6 +36,9 @@ MIMICKIT = PROJECT / "reference" / "MimicKit"
 def setup_paths():
     """The environments are MimicKit's: their config files use paths relative to its root."""
     os.chdir(MIMICKIT)
+    # run as a script, Python puts rl/ first in sys.path, where rl/amp.py would hide the amp/ folder
+    here = str(Path(__file__).resolve().parent)
+    sys.path[:] = [p for p in sys.path if str(Path(p or ".").resolve()) != here]
     for p in (str(PROJECT), str(MIMICKIT / "mimickit")):
         if p not in sys.path:
             sys.path.insert(0, p)
@@ -269,7 +276,13 @@ def main():
     env_config = resolve(args.env_config)
     config = yaml.safe_load(open(agent_config))
     env = build_heading_env(args.num_envs, args.device, env_file=env_config, engine_file=resolve(args.engine_config))
-    trainer = Trainer(env, config, args.device)
+    if "disc_optimizer" in config:                     # AMP config (configs/amp_heading_humanoid_agent.yaml)
+        from rl.amp import AMPTrainer
+        trainer = AMPTrainer(env, config, args.device)
+    else:                                              # PPO only (configs/ppo_heading_humanoid_agent.yaml)
+        trainer = Trainer(env, config, args.device)
+    print(f"{type(trainer).__name__}: {sum(p.numel() for p in trainer.ppo.parameters() if p.requires_grad)} "
+          f"parameters in pi and V", flush=True)
     if args.model_file:
         trainer.load(resolve(args.model_file))
 

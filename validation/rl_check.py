@@ -6,6 +6,8 @@ Test 2: observation normalizer (same batches recorded).
 Test 3: TD(lambda) returns, with falls, time limits and the bootstrap at the end of the buffer.
 Test 4: PPO on one real iteration of data (Target Heading env, 64 envs): returns and advantages,
         critic and actor losses on the same minibatch, and the parameters after one SGD step.
+Test 5: AMP (rl/amp.py) vs our AMP agent on MimicKit's PPO (amp/discriminator.py): D, the
+        combined reward, the targets, and D after one update, on the same data.
 
     python validation/rl_check.py
     python validation/rl_check.py --tests 3 4
@@ -41,6 +43,7 @@ from rl.returns import end_values, td_lambda_returns
 from rl.train import Trainer
 
 PPO_CONFIG = PROJECT / "configs" / "ppo_heading_humanoid_agent.yaml"
+AMP_CONFIG = PROJECT / "configs" / "amp_heading_humanoid_agent.yaml"
 TOL = 1e-5
 
 
@@ -215,11 +218,81 @@ def test_ppo_iteration(env=None):
     return ok
 
 
+# ======== Test 5: AMP on our PPO vs AMP on MimicKit's PPO ========
+def test_amp(env=None):
+    """rl/amp.py (AMPTrainer) vs amp/discriminator.py (HeadingAMPAgent, built on MimicKit's PPO),
+    same weights (pi, V, D), same normalizers, same rollout data:
+    D's outputs, the combined reward and the returns/advantages that follow, and D's parameters
+    after one update on the same minibatch. (The equations 6, 7, 8 are the same functions in both,
+    tested on their own in validation/phase4.py, test 2.)"""
+    from amp import discriminator as mk_amp
+    from rl.amp import AMPTrainer
+    print("\n=== Test 5: AMP on our PPO vs AMP on MimicKit's PPO (same data) ===")
+    env = env or load_envs.heading_env()
+    config = yaml.safe_load(open(AMP_CONFIG))
+    config["disc_norm_samples"] = 65536                 # both fit their own; ours is then copied from MimicKit's
+    torch.manual_seed(0)
+    if mp_util.get_num_procs() == 0:
+        mp_util.init(0, 1, DEVICE, None)
+    mk = mk_amp.build_heading_amp_agent(config, env, DEVICE)
+    trainer = AMPTrainer(env, config, DEVICE)
+    ours = trainer.ppo
+    copy_policy_from_mimickit(mk._model, ours.policy, ours.value)
+    with torch.no_grad():
+        trainer.disc.body.load_state_dict(mk._model._disc_layers.state_dict())
+        trainer.disc.out.load_state_dict(mk._model._disc_out.state_dict())
+        trainer.disc_norm.mean.copy_(mk._disc_obs_norm._mean)
+        trainer.disc_norm.std.copy_(mk._disc_obs_norm._std)
+
+    trainer.obs, _ = env.reset()
+    trainer.rollout_train()
+    ours.obs_norm.update()
+    with torch.no_grad():
+        mk._obs_norm._mean.copy_(ours.obs_norm.mean)
+        mk._obs_norm._std.copy_(ours.obs_norm.std)
+    buf = trainer.buf
+    mk._exp_buffer.reset()
+    for t in range(buf.steps):
+        for k in ["obs", "action", "a_logp", "next_obs", "reward", "done", "disc_obs"]:
+            mk._exp_buffer.record(k, buf.data[k][t])
+        mk._exp_buffer.record("rand_action_mask", torch.ones(buf.num_envs, device=DEVICE))
+        mk._exp_buffer.inc()
+
+    disc_obs = buf.flat("disc_obs")
+    ok = report("D on the rollout's agent pairs", (trainer.eval_disc(disc_obs) - mk._eval_disc(disc_obs)).abs().max().item())
+    mk.set_mode(base_agent.AgentMode.TRAIN)
+    mk._build_train_data()
+    trainer.before_targets()
+    trainer.ppo.compute_targets(buf, env.get_reward_fail(), env.get_reward_succ())
+    ok &= report("reward w_G r_G + w_S r_S", (buf.data["reward"] - mk._exp_buffer.get_data("reward")).abs().max().item())
+    ok &= report("returns and advantages after it", max((buf.data["tar_val"] - mk._exp_buffer.get_data("tar_val")).abs().max().item(),
+                                                        (buf.data["adv"] - mk._exp_buffer.get_data("adv")).abs().max().item()), 1e-4)
+    ok &= report("replay buffer size (both)", abs(len(trainer.replay) - len(mk._disc_replay)), 0)
+
+    mocap = trainer.disc_norm.normalize(env.fetch_disc_obs_demo(4096))
+    agent = trainer.disc_norm.normalize(trainer.replay.sample(4096))
+    step = trainer.disc_loss(mocap, agent)
+    trainer.disc_optimizer.zero_grad()
+    (step["disc_loss"] + step["disc_grad_penalty"]).backward()
+    trainer.disc_optimizer.step()
+    mk_loss = mk_amp.disc_loss_lsgan(mk._model.eval_disc(mocap), mk._model.eval_disc(agent)) \
+        + mk_amp.gradient_penalty(mk._model.eval_disc, mocap, mk._disc_grad_penalty)
+    mk._disc_optimizer.step(mk_loss)
+    ok &= report("loss of D (eq. 6 + eq. 8) on the same minibatch",
+                 abs(float(step["disc_loss"] + step["disc_grad_penalty"] - mk_loss)), 1e-5)
+    diff = max((trainer.disc.body[0].weight - mk._model._disc_layers[0].weight).abs().max().item(),
+               (trainer.disc.out.weight - mk._model._disc_out.weight).abs().max().item())
+    ok &= report("D's parameters after one update", diff, 1e-6)
+    print(f"  => {'OK' if ok else 'FAIL'}")
+    return ok
+
+
 TESTS = {
     "1": ("networks", test_networks),
     "2": ("observation normalizer", test_normalizer),
     "3": ("TD(lambda) returns", test_returns),
     "4": ("PPO on one real iteration", test_ppo_iteration),
+    "5": ("AMP vs AMP on MimicKit's PPO", test_amp),
 }
 
 
