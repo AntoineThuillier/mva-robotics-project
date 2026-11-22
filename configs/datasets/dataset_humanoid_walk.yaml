@@ -1,0 +1,21 @@
+# Walk: humanoid_walk + long/humanoid_long_walk* (9 clips, 229.4 s).
+# Subset of MimicKit's data/datasets/dataset_humanoid_locomotion.yaml, same weights (article, Table 2).
+motions:
+- file: data/motions/humanoid/humanoid_walk.pkl
+  weight: 3.0
+- file: data/motions/humanoid/long/humanoid_long_walk0.pkl
+  weight: 3.0
+- file: data/motions/humanoid/long/humanoid_long_walk1.pkl
+  weight: 3.0
+- file: data/motions/humanoid/long/humanoid_long_walk2.pkl
+  weight: 3.0
+- file: data/motions/humanoid/long/humanoid_long_walk3.pkl
+  weight: 3.0
+- file: data/motions/humanoid/long/humanoid_long_walk0_mirror.pkl
+  weight: 3.0
+- file: data/motions/humanoid/long/humanoid_long_walk1_mirror.pkl
+  weight: 3.0
+- file: data/motions/humanoid/long/humanoid_long_walk2_mirror.pkl
+  weight: 3.0
+- file: data/motions/humanoid/long/humanoid_long_walk3_mirror.pkl
+  weight: 3.0
