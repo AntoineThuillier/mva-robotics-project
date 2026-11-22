@@ -38,8 +38,10 @@ versions, avant le passage au venv du projet.
 | Retour moyen | 37,6 | 222,1 |
 
 Même résultat que sur Mac. La politique entraînée sous Isaac Gym ne se transfère pas à Newton.
-Une piste découverte en phase 1 (non vérifiée) : sous Newton, MimicKit démarre les épisodes
-avec des vitesses articulaires écrites dans la mauvaise convention (voir `phase1.md`).
+Sous Newton, MimicKit démarre les épisodes avec la vitesse de l'origine du bassin là où Newton
+attend celle de son centre de masse (écart moyen ≈ 0,1 m/s, `phase2.md`, test 2). Les vitesses
+articulaires, elles, sont dans la bonne convention. Cet écart est trop faible pour expliquer à
+lui seul l'échec du transfert (non vérifié).
 
 ### 2. Entraînement `amp_steering` sous Newton, 3 h : OK jusqu'au décollage
 
