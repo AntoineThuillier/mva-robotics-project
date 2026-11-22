@@ -5,9 +5,9 @@
     python amp/run.py --arg_file configs/ppo_heading_humanoid_args.txt --mode test --num_envs 32 \
         --model_file outputs/phase3/ppo_heading/model.pt --visualize true
 
-MimicKit's env_builder only knows MimicKit's environments: this script adds ours
-("task_heading", amp/heading_env.py), then calls MimicKit's main. Everything else (PPO,
-logs, saved models, test mode) is MimicKit's.
+MimicKit's env_builder and agent_builder only know MimicKit's environments and agents: this
+script adds ours ("task_heading", amp/heading_env.py; agent "AMP_heading", amp/discriminator.py),
+then calls MimicKit's main. Everything else (PPO, logs, saved models, test mode) is MimicKit's.
 
 Paths: MimicKit reads its files relative to its own root, where this script moves. Paths of
 the arguments below are resolved against the project root when the file exists there (and
@@ -84,6 +84,24 @@ def setup():
         return mimickit_build_env(env_file, engine_file, num_envs, device, visualize, record_video)
 
     env_builder.build_env = build_env
+
+    # our AMP agent (amp/discriminator.py), selected by agent_name in the agent config
+    import learning.agent_builder as agent_builder
+    from util.logger import Logger
+    from amp import discriminator
+
+    mimickit_build_agent = agent_builder.build_agent
+
+    def build_agent(agent_file, env, device):
+        agent_config = agent_builder.load_agent_file(agent_file) if agent_file else {}
+        if agent_config.get("agent_name") == discriminator.AGENT_NAME:
+            Logger.print("Building {} agent".format(discriminator.AGENT_NAME))
+            agent = discriminator.build_heading_amp_agent(agent_config, env, device)
+            Logger.print("Total parameter count: {}".format(agent.calc_num_params()))
+            return agent
+        return mimickit_build_agent(agent_file, env, device)
+
+    agent_builder.build_agent = build_agent
 
 
 if __name__ == "__main__":

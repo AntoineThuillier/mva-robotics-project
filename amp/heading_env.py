@@ -21,6 +21,8 @@ state init from the mocap) and only changes what differs from the article:
                   spherical joint velocities in the child frame, like the mocap
                   (validation/phase2.py, test 2b; same convention as amp/expert.py)
     episode       20 s (configs/amp_heading_humanoid_env.yaml)
+    disc obs      phase 4: info["disc_obs"] = our phi_paire(s, s') (amp/disc_features.py), demos
+                  from amp/expert.py, instead of MimicKit's features (10 states in its config)
 
 Goal observation: DeepMimic writes (cos D, -sin D, v*) with D = target heading - character
 heading, in its y-up frame where a heading h points to (cos h, 0, -sin h). In MimicKit's z-up
@@ -40,6 +42,9 @@ import envs.env_builder as env_builder        # imported first: sets the simulat
 import envs.smp_env as smp_env
 import envs.task_steering_env as task_steering_env
 import util.torch_util as torch_util
+
+from amp.disc_features import AMPFeatures, EtatPerso
+from amp.expert import ExpertTransitions, root_com_from_engine
 
 PROJECT = Path(__file__).resolve().parents[1]
 DEFAULT_ENV_FILE = "configs/amp_heading_humanoid_env.yaml"     # relative to the project root
@@ -120,6 +125,57 @@ class TaskHeadingEnv(task_steering_env.TaskSteeringEnv):
             body_pos, body_rot = self._kin_char_model.forward_kinematics(
                 self._ref_root_pos[env_ids], self._ref_root_rot[env_ids], self._ref_joint_rot[env_ids])
             self._prev_com[env_ids] = calc_com(body_pos, body_rot, self._body_com, self._body_mass)
+        return
+
+    # ---------- discriminator observations: our Φ (phase 4, step 2) ----------
+    # MimicKit's AMPEnv keeps the last num_disc_obs_steps (= 2) states of the character, read
+    # from Newton after each policy step, and gives info["disc_obs"] to the agent; we only replace
+    # what is computed from them: phi_paire(s, s') (amp/disc_features.py) instead of MimicKit's
+    # features, and expert pairs from amp/expert.py.
+
+    def _amp_features(self):
+        """AMPFeatures and ExpertTransitions, built on first use: MimicKit asks for the shape of
+        the discriminator observations while the env is still being built."""
+        if not hasattr(self, "_phi"):
+            self._phi = AMPFeatures(self._kin_char_model)
+            self._expert = ExpertTransitions(self._motion_lib, self._phi, root_com_from_engine(self._engine))
+        return self._phi, self._expert
+
+    def fetch_disc_obs_demo(self, num_samples):
+        """Expert pairs [Φ(s), Φ(s')] from the mocap, velocities in Newton's convention. (n, 210)."""
+        _, expert = self._amp_features()
+        return expert.sample(num_samples)
+
+    def _disc_hist_state(self, k, env_ids=None):
+        """State k of the history (-2 = s, -1 = s') as an EtatPerso."""
+        phi, _ = self._amp_features()
+        hist = [self._disc_hist_root_pos, self._disc_hist_root_rot, self._disc_hist_root_vel,
+                self._disc_hist_root_ang_vel, self._disc_hist_joint_rot, self._disc_hist_dof_vel,
+                self._disc_hist_body_pos]
+        x = [h.get_all()[:, k] for h in hist]            # get_all: oldest first
+        if env_ids is not None:
+            x = [v[env_ids] for v in x]
+        rp, rr, rv, ra, jr, dv, bp = x
+        return EtatPerso(rp, rr, rv, ra, jr, dv, phi.extraire_key_pos(bp))
+
+    def _update_disc_obs(self, env_ids=None):
+        phi, _ = self._amp_features()
+        disc_obs = phi.phi_paire(self._disc_hist_state(-2, env_ids), self._disc_hist_state(-1, env_ids))
+        if env_ids is None:
+            self._disc_obs_buf[:] = disc_obs
+        else:
+            self._disc_obs_buf[env_ids] = disc_obs
+        return
+
+    def _reset_disc_hist(self, env_ids):
+        """MimicKit fills the history with the mocap frames at t - 1/30 s and t: convert their root
+        velocity to Newton's convention, like the reset state (_ref_state_init)."""
+        super()._reset_disc_hist(env_ids)
+        if self.convert_init_vel and len(env_ids) > 0:
+            rr = self._disc_hist_root_rot.get_all()[env_ids]
+            rv = self._disc_hist_root_vel.get_all()[env_ids]
+            ra = self._disc_hist_root_ang_vel.get_all()[env_ids]
+            self._disc_hist_root_vel.fill(env_ids, root_origin_vel_to_com_vel(self._body_com[0], rr, rv, ra))
         return
 
     # ---------- goal ----------
