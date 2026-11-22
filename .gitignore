@@ -1,5 +1,5 @@
 data/
-outputs/
+outputs/**/*.pt
 __pycache__/
 .ipynb_checkpoints/
 reference/
