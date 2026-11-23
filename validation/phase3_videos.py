@@ -15,6 +15,7 @@ With --fixed_goal, only one video instead:
     python validation/phase3_videos.py
     python validation/phase3_videos.py --fixed_goal
     python validation/phase3_videos.py --run_dir outputs/phase3/smoke --seconds 6
+    python validation/phase3_videos.py --run_dir outputs/rl/amp_walk  # rl/train.py runs too
 
 Run from the project root, with the project venv (.venv).
 """
@@ -72,7 +73,7 @@ def main():
     args = p.parse_args()
     run_dir = Path(args.run_dir) if Path(args.run_dir).is_absolute() else PROJECT / args.run_dir
 
-    env = load_envs.heading_env(1)
+    env = phase3.run_env(run_dir, 1)
     policy = phase3.load_policy(env, run_dir, args.model_file)
     kin = env._kin_char_model
     parents = [kin.get_parent_id(j) for j in range(kin.get_num_joints())]
@@ -91,7 +92,7 @@ def main():
             pol = scripted(env, policy, script)
         frames = phase2_videos.record(env, pol, args.seconds, show_mocap=False)
         out = out_dir / f"{name}.mp4"
-        phase2_videos.render(frames, parents, f"PPO, task reward only ({name} goal)", out, fps=30)
+        phase2_videos.render(frames, parents, f"{run_dir.name} ({name} goal)", out, fps=30)
         end = frames[-1]["end"]
         print(f"{name}: " + (f"episode ended at {end[0] / 30:.2f} s ({end[1]})" if end else "no fall") + f" -> {out}")
     env._heading_drift_std, env._sharp_turn_prob, env._speed_change_prob = saved

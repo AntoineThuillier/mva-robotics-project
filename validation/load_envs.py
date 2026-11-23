@@ -62,10 +62,12 @@ def steering_env(num_envs=64):
                                               "data/engines/newton_engine.yaml", num_envs, DEVICE, visualize=False))
 
 
-def heading_env(num_envs=64):
+def heading_env(num_envs=64, env_file=None):
     """Target Heading environment (amp/heading_env.py), PD control, policy at 30 Hz.
-    Used by all phase 2 tests."""
-    return _get(("heading", num_envs), lambda: build_heading_env(num_envs, DEVICE))
+    Used by all phase 2 tests. env_file: another env config (e.g. the env_config.yaml of a run,
+    whose dataset can differ); default configs/amp_heading_humanoid_env.yaml."""
+    env_file = str(env_file) if env_file else None
+    return _get(("heading", num_envs, env_file), lambda: build_heading_env(num_envs, DEVICE, env_file=env_file))
 
 
 def heading_env_nopd(num_envs=16):

@@ -12,6 +12,7 @@ Test 4: falls: less than 10 % of the test episodes end with a fall.
 
     python validation/phase3.py                                  # run outputs/phase3/ppo_heading
     python validation/phase3.py --run_dir outputs/phase3/smoke --tests 1 2
+    python validation/phase3.py --run_dir outputs/rl/amp_walk         # rl/train.py runs too
 
 Run from the project root, with the project venv (.venv).
 """
@@ -22,6 +23,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
+import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import load_envs                                      # first: paths, cwd and environment cache
@@ -55,12 +57,33 @@ def _is_number(s):
         return False
 
 
+def run_env(run_dir, num_envs):
+    """Target Heading env with the run's saved env_config.yaml (its dataset: Walk, Run or both)."""
+    return load_envs.heading_env(num_envs, Path(run_dir) / "env_config.yaml")
+
+
 def load_policy(env, run_dir, model_file=None):
-    """MimicKit agent of the run (its saved agent_config.yaml), in test mode (mean action).
+    """Policy of the run in test mode (mean action), from its saved agent_config.yaml.
+    Two checkpoint formats: rl/train.py ({"ppo": ...}, our PPO) or MimicKit's agent (amp/run.py).
     Returns policy(env) -> actions, usable with phase2.rollout."""
     run_dir = Path(run_dir)
+    model_file = str(model_file or run_dir / "model.pt")
+    state = torch.load(model_file, map_location=DEVICE)
+    if "ppo" in state:                                 # rl/train.py
+        from rl.ppo import PPO
+        config = yaml.safe_load(open(run_dir / "agent_config.yaml"))
+        a_space = env.get_action_space()
+        ppo = PPO(config, env.get_obs_space().shape[0], a_space.low, a_space.high, env.get_num_envs(), DEVICE)
+        ppo.load_state_dict(state["ppo"])
+        ppo.eval()
+
+        def policy(env_):
+            with torch.no_grad():
+                return ppo.act(env_._obs_buf, explore=False)[0]
+        return policy
+
     agent = agent_builder.build_agent(str(run_dir / "agent_config.yaml"), env, DEVICE)
-    agent.load(str(model_file or run_dir / "model.pt"))
+    agent.load(model_file)
     agent.eval()
     agent.set_mode(base_agent.AgentMode.TEST)
 
@@ -105,7 +128,7 @@ def test_learning_curve(run_dir):
     axes[0].set_xlabel("samples (M)"); axes[0].set_ylabel("return (sum of r_G)"); axes[0].legend()
     axes[1].plot(s, ep / 30, label="test"); axes[1].plot(s, log["Train_Episode_Length"] / 30, label="train", alpha=0.6)
     axes[1].set_xlabel("samples (M)"); axes[1].set_ylabel("episode length (s)"); axes[1].legend()
-    fig.suptitle(f"PPO, task reward only ({Path(run_dir).name})")
+    fig.suptitle(Path(run_dir).name)
     fig.tight_layout()
     out = Path(run_dir) / "learning_curve.png"
     fig.savefig(out, dpi=100)
@@ -217,7 +240,7 @@ def main():
     if "1" in args.tests:
         results["1"] = test_learning_curve(run_dir)
     if any(t in args.tests for t in ("2", "3", "4")):
-        env = load_envs.heading_env(args.num_envs)
+        env = run_env(run_dir, args.num_envs)
         policy = load_policy(env, run_dir, args.model_file)
         if "2" in args.tests or "4" in args.tests:
             ok2, ok4 = test_return_and_falls(env, policy)
