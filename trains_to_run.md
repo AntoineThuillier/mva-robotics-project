@@ -23,7 +23,7 @@ PPO seul (`ppo_heading`, série 1) : fait, vidéos.
 faites dans la section `queue` du script avant de le relancer.
 
 1. Évaluation et vidéos des runs finis qui n'en ont pas : `amp_run_2`, `amp_run_3`, `amp_walk_3`,
-   `amp_locomotion_3`. Compter environ 40 min.
+   `amp_locomotion_3`, `amp_run_5`. Compter environ 50 min.
 2. Les deux corrections du cou de Run, dans l'ordre :
    1. `amp_run_6`, prioritaire : c'est le test de la seconde correction ;
    2. `amp_walk_5` ;
@@ -43,8 +43,7 @@ ses chemins de config n'existent plus, et s'arrêtera. Le `outputs/rl/amp_walk_5
 écrasé plus tard. Ensuite :
 
 ```bash
-bash runs.sh eval amp_run_5      # évaluation et vidéos de amp_run_5
-bash runs.sh                     # la file ci-dessus
+bash runs.sh                     # la file ci-dessus, évaluation de amp_run_5 comprise
 ```
 
 ## Suivi

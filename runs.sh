@@ -48,6 +48,7 @@ evaluate amp_run_2
 evaluate amp_run_3
 evaluate amp_walk_3
 evaluate amp_locomotion_3
+evaluate amp_run_5
 
 # the two fixes of the Run neck (series 5 and 6)
 amp run 6
