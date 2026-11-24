@@ -9,8 +9,8 @@ Test 4: PPO on one real iteration of data (Target Heading env, 64 envs): returns
 Test 5: AMP (rl/amp.py) vs our AMP agent on MimicKit's PPO (amp/discriminator.py): D, the
         combined reward, the targets, and D after one update, on the same data.
 
-    python validation/rl_check.py
-    python validation/rl_check.py --tests 3 4
+    python validation/check_rl_vs_mimickit.py
+    python validation/check_rl_vs_mimickit.py --tests 3 4
 
 Run from the project root, with the project venv (.venv).
 """
@@ -42,8 +42,8 @@ from rl.normalizer import Normalizer
 from rl.returns import end_values, td_lambda_returns
 from rl.train import Trainer
 
-PPO_CONFIG = PROJECT / "configs" / "ppo_heading_humanoid_agent.yaml"
-AMP_CONFIG = PROJECT / "configs" / "amp_heading_humanoid_agent.yaml"
+PPO_CONFIG = PROJECT / "configs" / "run1" / "ppo_agent.yaml"
+AMP_CONFIG = PROJECT / "configs" / "run1" / "amp_agent.yaml"
 TOL = 1e-5
 
 
@@ -224,7 +224,7 @@ def test_amp(env=None):
     same weights (pi, V, D), same normalizers, same rollout data:
     D's outputs, the combined reward and the returns/advantages that follow, and D's parameters
     after one update on the same minibatch. (The equations 6, 7, 8 are the same functions in both,
-    tested on their own in validation/phase4.py, test 2.)"""
+    tested on their own in validation/check_amp.py, test 2.)"""
     from amp import discriminator as mk_amp
     from rl.amp import AMPTrainer
     print("\n=== Test 5: AMP on our PPO vs AMP on MimicKit's PPO (same data) ===")

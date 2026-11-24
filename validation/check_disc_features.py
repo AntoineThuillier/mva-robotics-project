@@ -12,9 +12,9 @@ Test 5: Φ unchanged when the whole world is rotated around z or moved horizonta
 Test 6: no NaN in the mocap and in Φ.
 Test 7: expert transitions sampler (amp/expert.py), end to end through Newton.
 
-    python validation/phase1.py                     # all tests, 64 random states
-    python validation/phase1.py --num_envs 256
-    python validation/phase1.py --tests 3 4         # only some tests
+    python validation/check_disc_features.py                     # all tests, 64 random states
+    python validation/check_disc_features.py --num_envs 256
+    python validation/check_disc_features.py --tests 3 4         # only some tests
 
 Outputs (figures) go to outputs/phase1/.
 
@@ -208,7 +208,7 @@ def test_ang_vel_mocap_equals_sim(eng, kin, ml, cid, n):
     `expected_body_origin_vel`). Three ways of writing the velocities:
       - raw mocap velocities;
       - `mocap_velocities_to_newton` (amp/expert.py): root origin -> center of mass, joints
-        unchanged. This is the convention of Newton's SOLVER (validation/phase2.py, test 2);
+        unchanged. This is the convention of Newton's SOLVER (validation/check_heading_env.py, test 2);
       - the same, plus spherical joint velocities rotated to the parent frame
         (`eval_fk_joint_velocities`). This is the convention eval_fk assumes.
 
@@ -255,7 +255,7 @@ def mocap_velocities_to_newton(eng, kin, state):
 def eval_fk_joint_velocities(kin, joint_rot, dof_vel):
     """Spherical joint velocities rotated from the child to the parent frame (ω_parent = q · ω_child):
     the convention Newton's eval_fk assumes, NOT the one its solver uses. Only for test 1b and
-    phase1_view_clip.py, which read velocities through eval_fk."""
+    video_mocap_clip.py, which read velocities through eval_fk."""
     dof_vel = dof_vel.clone()
     for j in range(1, kin.get_num_joints()):
         if kin.get_joint(j).joint_type == JointType.SPHERICAL:

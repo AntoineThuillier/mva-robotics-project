@@ -1,7 +1,6 @@
-# Our AMP agent for phase 4 (amp/discriminator.py), on the Target Heading env.
-# PPO part: same values as configs/ppo_heading_humanoid_agent.yaml (phase 3), so that phase 4
-# differs from phase 3 by the discriminator only. Discriminator part: article, Table 4, with the
-# batch sizes adapted to 4096 GPU envs (see amp/discriminator.py).
+# AMP agent, disc_steps 8 (as configs/run2/amp_agent.yaml) and the constant
+# entries of Φ masked in D's input (disc_mask_constant, rl/amp.py): the neck of the Run mocap is
+# frozen at 0, which gave D a perfect cue. Runs amp_*_5 (env configs of this folder: feet aligned).
 
 agent_name: "AMP_heading"
 
@@ -55,7 +54,8 @@ disc_optimizer:
 
 disc_grad_penalty: 10            # w_gp (eq. 8), Table 4 and section 8.1
 disc_batch_size: 4096            # pairs per source (mocap and agent) per update of D (article: 256)
-disc_steps: 32                   # updates of D per iteration: 32 x 4096 = the agent pairs of one rollout
+disc_mask_constant: True        # mask the entries of Φ with mocap std < 1e-3 (not in the article)
+disc_steps: 8                    # updates of D per iteration (was 32): 8 x 4096 = 1/4 of the agent pairs of one rollout
 disc_replay_size: 100000         # B, Table 4
 disc_replay_insert: 4096         # agent pairs added to B per iteration (article: one iteration = 4096 samples)
 disc_norm_samples: 1000000       # mocap pairs used once to compute the mean and std of D's input

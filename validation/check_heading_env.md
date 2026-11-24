@@ -1,7 +1,7 @@
 # Phase 2 : l'environnement Target Heading
 
-Validation décrite dans `CADRAGE.md` (section 4, phase 2). Script : `validation/phase2.py`.
-Code testé : `amp/heading_env.py` et sa config `configs/amp_heading_humanoid_env.yaml`.
+Validation décrite dans `CADRAGE.md` (section 4, phase 2). Script : `validation/check_heading_env.py`.
+Code testé : `amp/heading_env.py` et sa config `configs/run1/locomotion_env.yaml`.
 
 **Bilan : 6 tests sur 6 OK. L'environnement suit l'article (goal, calendrier de DeepMimic,
 éq. 11, épisodes de 20 s). Deux résultats changent le plan :**
@@ -25,14 +25,14 @@ Code testé : `amp/heading_env.py` et sa config `configs/amp_heading_humanoid_en
 ## Commandes
 
 ```bash
-.venv/Scripts/python validation/phase2.py                # tous les tests, 64 envs, environ 1 min
-.venv/Scripts/python validation/phase2.py --tests 3 4
-.venv/Scripts/python validation/phase2_videos.py         # vidéos des tests 1 et 2, environ 1 min
+.venv/Scripts/python validation/check_heading_env.py                # tous les tests, 64 envs, environ 1 min
+.venv/Scripts/python validation/check_heading_env.py --tests 3 4
+.venv/Scripts/python validation/video_dummy_policies.py         # vidéos des tests 1 et 2, environ 1 min
 ```
 
 Les environnements viennent de `validation/load_envs.py`, qui ne les construit qu'une fois par
 processus. Dans un notebook ou avec `python -i`, on peut donc lancer les tests l'un après l'autre
-(`phase2.test_random_policy()`, puis `phase2.test_reset_and_tracking()`…) sans reconstruire
+(`check_heading_env.test_random_policy()`, puis `check_heading_env.test_reset_and_tracking()`…) sans reconstruire
 l'environnement.
 
 ## Ce que fait l'environnement
@@ -128,7 +128,7 @@ viendra des phases 3 et 4.
    solveur qui fait la simulation (MuJoCo dans Newton) intègre ces mêmes vitesses dans le repère
    de l'**enfant**, et les relit dans ce repère. C'est la convention de la mocap. Newton n'est donc
    pas cohérent avec lui-même : c'est le même genre de défaut que `body_vel` après `eval_fk`,
-   déjà signalé dans `phase1.md`.
+   déjà signalé dans `check_disc_features.md`.
 
    **Conséquences :**
    - au démarrage des épisodes, seule la vitesse de la racine doit être convertie : c'est ce que
@@ -142,7 +142,7 @@ viendra des phases 3 et 4.
 
 ## Vidéos (pour le rapport)
 
-`validation/phase2_videos.py` produit trois vidéos de 3 s, ralenties ×0,5, dans `outputs/phase2/`
+`validation/video_dummy_policies.py` produit trois vidéos de 3 s, ralenties ×0,5, dans `outputs/phase2/`
 (non versionné). Le personnage simulé est en bleu, le clip suivi en gris, la direction cible en
 vert (longueur proportionnelle à v*), la vitesse du centre de masse en orange ; v*, la vitesse
 dans la direction cible et r_G sont affichés à chaque pas. Pour le suivi, le goal part aligné

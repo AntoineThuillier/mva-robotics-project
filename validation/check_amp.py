@@ -8,8 +8,8 @@ Test 2: the discriminator D and the article's equations (step 3): LSGAN loss (eq
         gradient penalty (eq. 8), style reward (eq. 7), on known values and on our D.
 Test 3: the AMP agent (step 4) on one training iteration: rewards, replay buffer, updates.
 
-    python validation/phase4.py                 # all tests, 64 envs
-    python validation/phase4.py --tests 1
+    python validation/check_amp.py                 # all tests, 64 envs
+    python validation/check_amp.py --tests 1
 
 Run from the project root, with the project venv (.venv).
 """
@@ -25,10 +25,10 @@ from load_envs import DEVICE, PROJECT
 import torch
 import yaml
 
-import phase2
+import check_heading_env
 from amp import discriminator as disc
 
-AGENT_CONFIG = PROJECT / "configs" / "amp_heading_humanoid_agent.yaml"
+AGENT_CONFIG = PROJECT / "configs" / "run1" / "amp_agent.yaml"
 W_GP = 10.0          # article, Table 4
 
 TOLERANCE = 1e-3     # float32 (Newton vs MimicKit forward kinematics, see phase 1)
@@ -78,11 +78,11 @@ def test_disc_obs(env=None):
                          eng.get_dof_vel(char_id), eng.get_body_pos(char_id))
 
     err_b, checked = 0.0, 0
-    _, _, done, _ = env.step(phase2.mocap_targets(env))
+    _, _, done, _ = env.step(check_heading_env.mocap_targets(env))
     alive = done == 0
     s = clone_state(newton_state())
     for _ in range(5):
-        _, _, done, info = env.step(phase2.mocap_targets(env))
+        _, _, done, info = env.step(check_heading_env.mocap_targets(env))
         s1 = newton_state()
         keep = alive & (done == 0)
         if keep.any():

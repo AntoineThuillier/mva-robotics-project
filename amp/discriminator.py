@@ -50,7 +50,7 @@ AGENT_NAME = "AMP_heading"
 
 
 # the article's equations 6, 7, 8 and the replay buffer: shared with our own PPO (rl/amp.py),
-# tested in validation/phase4.py (test 2)
+# tested in validation/check_amp.py (test 2)
 from rl.amp import ReplayBuffer, disc_loss_lsgan, gradient_penalty, style_reward  # noqa: E402,F401
 
 

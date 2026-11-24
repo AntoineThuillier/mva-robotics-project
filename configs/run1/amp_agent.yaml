@@ -1,0 +1,61 @@
+# Our AMP agent for phase 4 (amp/discriminator.py), on the Target Heading env.
+# PPO part: same values as configs/run1/ppo_agent.yaml (phase 3), so that phase 4
+# differs from phase 3 by the discriminator only. Discriminator part: article, Table 4, with the
+# batch sizes adapted to 4096 GPU envs (see amp/discriminator.py).
+
+agent_name: "AMP_heading"
+
+
+model:
+  actor_net: "fc_2layers_1024units"      # layers 1024 and 512, ReLU
+  actor_init_output_scale: 0.01
+  actor_std_type: "FIXED"
+  action_std: 0.05
+
+  critic_net: "fc_2layers_1024units"
+
+  disc_net: "fc_2layers_1024units"       # discriminator D (step 3): 1024 and 512 ReLU, as pi and V
+
+actor_optimizer:
+    type: "SGD"
+    learning_rate: 5e-5
+
+critic_optimizer:
+    type: "SGD"
+    learning_rate: 1e-4
+
+discount: 0.99
+steps_per_iter: 32
+iters_per_output: 50         # test episodes, log line and model saved every 50 iterations (6.5 M samples
+                             # with 4096 envs): ~20 points on the learning curve for 140 M samples
+                             # (MimicKit's AMP agent: 200)
+test_episodes: 32
+normalizer_samples: 100000000
+use_mixed_precision: false
+
+actor_epochs: 5
+actor_batch_size: 4
+critic_epochs: 2
+critic_batch_size: 2
+
+td_lambda: 0.95
+ppo_clip_ratio: 0.2
+norm_adv_clip: 4.0
+action_bound_weight: 10.0
+action_entropy_weight: 0.0
+action_reg_weight: 0.0
+
+# ---------- discriminator and style reward (phase 4, article Table 4) ----------
+task_reward_weight: 0.5          # w_G (eq. 4)
+style_reward_weight: 0.5         # w_S (eq. 4)
+
+disc_optimizer:
+    type: "SGD"                  # MimicKit's SGD has momentum 0.9, as Table 4
+    learning_rate: 1e-5          # D stepsize, Table 4
+
+disc_grad_penalty: 10            # w_gp (eq. 8), Table 4 and section 8.1
+disc_batch_size: 4096            # pairs per source (mocap and agent) per update of D (article: 256)
+disc_steps: 32                   # updates of D per iteration: 32 x 4096 = the agent pairs of one rollout
+disc_replay_size: 100000         # B, Table 4
+disc_replay_insert: 4096         # agent pairs added to B per iteration (article: one iteration = 4096 samples)
+disc_norm_samples: 1000000       # mocap pairs used once to compute the mean and std of D's input

@@ -1,6 +1,6 @@
 # Phase 0 : installation et prise en main de MimicKit
 
-Validation décrite dans `CADRAGE.md` (section 4, phase 0). Script : `validation/phase0.py`.
+Validation décrite dans `CADRAGE.md` (section 4, phase 0). Script : `validation/check_mimickit_install.py`.
 
 **Bilan : environnement en place, entraînement AMP de MimicKit sous Newton conforme à leur log
 jusqu'au décollage, débit suffisant. Le modèle pré-entraîné ne marche pas sous Newton.**
@@ -21,9 +21,9 @@ versions, avant le passage au venv du projet.
 ## Commandes
 
 ```bash
-.venv/bin/python validation/phase0.py pretrained              # rejoue le modèle pré-entraîné
-.venv/bin/python validation/phase0.py train --minutes 180     # entraînement + comparaison au log
-.venv/bin/python validation/phase0.py compare outputs/phase0/train/train.out
+.venv/bin/python validation/check_mimickit_install.py pretrained              # rejoue le modèle pré-entraîné
+.venv/bin/python validation/check_mimickit_install.py train --minutes 180     # entraînement + comparaison au log
+.venv/bin/python validation/check_mimickit_install.py compare outputs/phase0/train/train.out
 ```
 
 ## Résultats
@@ -39,7 +39,7 @@ versions, avant le passage au venv du projet.
 
 Même résultat que sur Mac. La politique entraînée sous Isaac Gym ne se transfère pas à Newton.
 Sous Newton, MimicKit démarre les épisodes avec la vitesse de l'origine du bassin là où Newton
-attend celle de son centre de masse (écart moyen ≈ 0,1 m/s, `phase2.md`, test 2). Les vitesses
+attend celle de son centre de masse (écart moyen ≈ 0,1 m/s, `check_heading_env.md`, test 2). Les vitesses
 articulaires, elles, sont dans la bonne convention. Cet écart est trop faible pour expliquer à
 lui seul l'échec du transfert (non vérifié).
 
@@ -77,4 +77,4 @@ mesuré est un minorant.
 
 - `outputs/phase0/pretrained/test.out`
 - `outputs/phase0/train/` : `model.pt`, `log.txt`, `train.out` (run de 3 h)
-- `outputs/phase0/train_3h.report` : rapport de `phase0.py`
+- `outputs/phase0/train_3h.report` : rapport de `check_mimickit_install.py`

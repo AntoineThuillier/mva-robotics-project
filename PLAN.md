@@ -1,12 +1,12 @@
 # Plan : état d'avancement
 
-Ce fichier suit la structure de `pseudo-code.py` et ne décrit que ce qui est fait (phases 0 à 2).
-Pour les détails, voir `CADRAGE.md` et `validation/phase*.md`.
+Ce fichier ne décrit que ce qui est fait (phases 0 à 2).
+Pour les détails, voir `CADRAGE.md` et `validation/README.md` (bilans `validation/check_*.md`).
 
 ## 0. Configuration (phase 0) : fait
 
 But : vérifier que MimicKit fonctionne sous le simulateur Newton avant d'écrire notre code.
-Script : `validation/phase0.py`.
+Script : `validation/check_mimickit_install.py`.
 
 - `pretrained` : rejoue le modèle AMP pré-entraîné de MimicKit. **Échec** : les épisodes durent
   80 pas au lieu de 300. Le modèle a été entraîné sous Isaac Gym et ne se transfère pas à Newton.
@@ -36,7 +36,7 @@ tirées de la mocap.
 L'agent est lu dans Newton, alors que l'expert vient de la mocap (MimicKit). Les deux doivent
 être dans la même convention, sinon le discriminateur pourrait distinguer l'expert de l'agent
 par la seule convention des vitesses. **Une seule vitesse diffère** (mesuré dans le simulateur
-en phase 2, `validation/phase2.md`, test 2) :
+en phase 2, `validation/check_heading_env.md`, test 2) :
 - pour la racine, MimicKit donne la vitesse de l'origine du bassin, Newton celle de son centre
   de masse (v_com = v_origine + ω × r) ;
 - pour les articulations sphériques, les deux utilisent le repère de l'enfant : **rien à
@@ -57,7 +57,7 @@ Autres pièges :
 - le cou de `humanoid_walk.pkl` contient des NaN, que MimicKit remplace par une rotation nulle
   (le cou reste figé dans ce clip).
 
-### Validation : `validation/phase1.py` (tous les tests OK)
+### Validation : `validation/check_disc_features.py` (tous les tests OK)
 
 - Test 1 : vérifie que Φ calculé sur la mocap est égal à Φ recalculé après avoir placé Newton
   dans le même état.
@@ -75,7 +75,7 @@ Autres pièges :
 - Test 7 : vérifie le sampler `ExpertTransitions` de bout en bout : forme du résultat, paires
   dans un même clip, respect des poids, cohérence avec Newton.
 
-`validation/phase1_view_clip.py` fait une vidéo d'un clip joué dans Newton pour contrôler
+`validation/video_mocap_clip.py` fait une vidéo d'un clip joué dans Newton pour contrôler
 visuellement les poses et les vitesses. `notebooks/01_visualisation_mocap.ipynb` sert à explorer
 les données.
 
@@ -96,11 +96,11 @@ décide de la fin des épisodes.
     recule, sans le terme de regard de MimicKit ;
   - des épisodes de 20 s ;
   - la vitesse de la racine convertie au démarrage des épisodes.
-- `configs/amp_heading_humanoid_env.yaml` : sa configuration.
+- `configs/run1/locomotion_env.yaml` : sa configuration.
 - `validation/load_envs.py` : construit les environnements des scripts de validation, une
   seule fois par processus.
 
-### Validation : `validation/phase2.py` (tous les tests OK)
+### Validation : `validation/check_heading_env.py` (tous les tests OK)
 
 - Test 1 : vérifie qu'avec des actions aléatoires le personnage tombe en moins de 3 s.
 - Test 2 : vérifie les vitesses écrites au démarrage, mesure les conventions du simulateur

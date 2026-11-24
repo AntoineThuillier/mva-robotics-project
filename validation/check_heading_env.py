@@ -10,8 +10,8 @@ Test 4: goal schedule statistics vs DeepMimic (SceneHeadingAMP.cpp).
 Test 5: goal observation g.
 Test 6: episodes end at 20 s.
 
-    python validation/phase2.py                     # all tests, 64 envs
-    python validation/phase2.py --tests 3 4
+    python validation/check_heading_env.py                     # all tests, 64 envs
+    python validation/check_heading_env.py --tests 3 4
 
 Run from the project root, with the project venv (.venv).
 
@@ -19,9 +19,9 @@ The environments come from validation/load_envs.py and are built once per proces
 notebook or `python -i`, the tests can be run one after the other without rebuilding them:
 
     import sys; sys.path.insert(0, "validation")
-    import phase2
-    phase2.test_random_policy()            # builds the environment
-    phase2.test_reset_and_tracking()       # reuses it (builds only the no-PD one)
+    import check_heading_env
+    check_heading_env.test_random_policy()            # builds the environment
+    check_heading_env.test_reset_and_tracking()       # reuses it (builds only the no-PD one)
 """
 
 import argparse
@@ -159,7 +159,7 @@ def test_reset_and_tracking(env=None, env_nopd=None):
         velocity is in the world frame. Criterion: the matching convention explains the motion
         within 0.5 rad/s (0.05 m/s for the root) and at least 3 times better than the other;
     (c) mocap tracking (PD target = pose of the clip one step later): mean body position error
-        after one step < 3 cm. The episode length is reported, without criterion (see phase2.md).
+        after one step < 3 cm. The episode length is reported, without criterion (see check_heading_env.md).
     Returns True if OK."""
     env = load_envs.heading_env() if env is None else env
     env_nopd = load_envs.heading_env_nopd() if env_nopd is None else env_nopd

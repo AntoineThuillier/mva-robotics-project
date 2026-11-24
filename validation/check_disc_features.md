@@ -1,7 +1,7 @@
 # Phase 1 : les données « positives » du discriminateur
 
-Validation décrite dans `CADRAGE.md` (section 4, phase 1). Scripts : `validation/phase1.py`
-(tests) et `validation/phase1_view_clip.py` (vidéo d'un clip joué dans Newton).
+Validation décrite dans `CADRAGE.md` (section 4, phase 1). Scripts : `validation/check_disc_features.py`
+(tests) et `validation/video_mocap_clip.py` (vidéo d'un clip joué dans Newton).
 Code testé : `amp/disc_features.py` (Φ) et `amp/expert.py` (transitions expertes).
 
 **Bilan : 8 tests sur 8 OK. Φ et le tirage des transitions expertes sont validés. Seule la
@@ -11,7 +11,7 @@ dans `amp/expert.py`).**
 > **Correction (19 nov. 2026, après la phase 2).** La première version de cette phase concluait
 > qu'il fallait aussi tourner les vitesses des articulations sphériques vers le repère du parent.
 > Ce n'est vrai que pour `eval_fk` : le solveur de Newton, qui fait la simulation, utilise le
-> repère de l'enfant, comme la mocap (`validation/phase2.md`, test 2). La rotation a été retirée
+> repère de l'enfant, comme la mocap (`validation/check_heading_env.md`, test 2). La rotation a été retirée
 > de `amp/expert.py`, et le test 1b documente maintenant ce piège. Les résultats ci-dessous du
 > test 1b et de la vidéo sont ceux de la version actuelle.
 
@@ -20,15 +20,15 @@ dans `amp/expert.py`).**
 | | |
 |---|---|
 | Date | 17 nov. 2026, commit `efa1662` |
-| Machine | `quetzal`, NVIDIA RTX A5000, `.venv/` du projet (versions dans `phase0.md`) |
+| Machine | `quetzal`, NVIDIA RTX A5000, `.venv/` du projet (versions dans `check_mimickit_install.md`) |
 | Données | 56 clips du jeu Locomotion (`data/datasets/dataset_humanoid_locomotion.yaml`) |
 
 ## Commandes
 
 ```bash
-.venv/bin/python validation/phase1.py --num_envs 256          # tous les tests
-.venv/bin/python validation/phase1.py --tests 3 4             # quelques tests
-.venv/bin/python validation/phase1_view_clip.py --clip humanoid_run [--raw]
+.venv/bin/python validation/check_disc_features.py --num_envs 256          # tous les tests
+.venv/bin/python validation/check_disc_features.py --tests 3 4             # quelques tests
+.venv/bin/python validation/video_mocap_clip.py --clip humanoid_run [--raw]
 ```
 
 ## Résultats (256 états tirés au hasard)
@@ -120,7 +120,7 @@ convention de `eval_fk` (articulations dans le repère du parent), pas dans cell
    Conversion : v_com = v_origine + ω × r.
 
    Pour les rotules, MimicKit (`MotionLib`) exprime la vitesse dans le repère de l'enfant
-   (q0⁻¹·q1). Le solveur de Newton aussi (`validation/phase2.md`, test 2) : rien à convertir.
+   (q0⁻¹·q1). Le solveur de Newton aussi (`validation/check_heading_env.md`, test 2) : rien à convertir.
    Seul `eval_fk` les lit dans le repère du parent, d'où la conclusion erronée de la première
    version de cette phase (voir la correction en tête).
 
@@ -138,7 +138,7 @@ convention de `eval_fk` (articulations dans le repère du parent), pas dans cell
    la vitesse du parent est propagée comme celle de son centre de masse, mais c'est celle de
    l'origine qui est stockée pour l'enfant. L'erreur grandit le long du squelette, jusqu'à
    ≈ 2 m/s sur les mains et les pieds. Ne pas lire `get_body_vel` après un placement d'état ;
-   `newton_body_origin_vel` (dans `phase1.py`) reconstruit les vraies vitesses.
+   `newton_body_origin_vel` (dans `check_disc_features.py`) reconstruit les vraies vitesses.
 
 4. **NaN sur le cou de `humanoid_walk.pkl`** (colonnes 9 à 11, 125 frames) : au chargement,
    MimicKit les remplace en silence par une rotation nulle. Dans ce clip, le cou reste figé droit.

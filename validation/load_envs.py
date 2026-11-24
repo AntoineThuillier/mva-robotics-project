@@ -1,7 +1,7 @@
 """Environments shared by the validation scripts, built once per Python process.
 
 This module only defines and builds the environments (which config files, how many copies);
-the tests themselves are in validation/phaseN.py.
+the tests themselves are in the validation/check_*.py scripts.
 
     steering_env()       MimicKit's AMP steering env, unchanged      phase 1
     heading_env()        our Target Heading env (amp/heading_env.py)  phase 2
@@ -49,7 +49,7 @@ def _get(key, build):
 
 def steering_env(num_envs=64):
     """MimicKit's AMP steering environment (TaskSteeringEnv), unchanged. Used by phase 1, which
-    only takes its Newton engine, skeleton and clips (validation/phase1.py, build_env).
+    only takes its Newton engine, skeleton and clips (validation/check_disc_features.py, build_env).
 
     env_builder.build_env arguments:
       - env file: skeleton, key bodies, episode length, initial pose, reward weights, and the
@@ -65,7 +65,7 @@ def steering_env(num_envs=64):
 def heading_env(num_envs=64, env_file=None):
     """Target Heading environment (amp/heading_env.py), PD control, policy at 30 Hz.
     Used by all phase 2 tests. env_file: another env config (e.g. the env_config.yaml of a run,
-    whose dataset can differ); default configs/amp_heading_humanoid_env.yaml."""
+    whose dataset can differ); default configs/run1/locomotion_env.yaml."""
     env_file = str(env_file) if env_file else None
     return _get(("heading", num_envs, env_file), lambda: build_heading_env(num_envs, DEVICE, env_file=env_file))
 

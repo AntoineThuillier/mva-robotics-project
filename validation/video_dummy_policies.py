@@ -12,8 +12,8 @@ velocity of the center of mass (orange arrow); text: v*, speed along the target 
 r_G, end of the episode. For the tracking videos the goal starts aligned with the clip
 (direction the character faces, v* = speed of the clip), then follows the normal schedule.
 
-    python validation/phase2_videos.py
-    python validation/phase2_videos.py --videos random --seconds 2
+    python validation/video_dummy_policies.py
+    python validation/video_dummy_policies.py --videos random --seconds 2
 
 Run from the project root, with the project venv (.venv).
 """
@@ -33,7 +33,7 @@ import load_envs                           # first: paths, cwd and environment c
 from load_envs import DEVICE, PROJECT
 from util import torch_util as tu
 
-import phase2
+import check_heading_env
 
 ARROW_SCALE = 0.3                          # arrow length = speed (m/s) * 0.3 s
 VIDEOS = {
@@ -86,11 +86,11 @@ def record(env, policy, seconds, show_mocap):
         v = (com_new - com)[0] / dt
         com = com_new
         if end is None and done[0].item() != 0:
-            end = (k + 1, "fall" if done[0].item() == phase2.FAIL else "time")
+            end = (k + 1, "fall" if done[0].item() == check_heading_env.FAIL else "time")
         frames.append(dict(
             t=(k + 1) * dt,
             sim=env._engine.get_body_pos(cid)[0].cpu().numpy(),
-            mocap=phase2.mocap_body_pos(env)[0].cpu().numpy() if show_mocap else None,
+            mocap=check_heading_env.mocap_body_pos(env)[0].cpu().numpy() if show_mocap else None,
             com=com_new[0].cpu().numpy(), v=v.cpu().numpy(), d=d.cpu().numpy(), vs=vs,
             v_proj=float((d * v[:2]).sum()), r=rew[0].item(),
             end=end))
@@ -155,7 +155,7 @@ def main():
             reset_on(env, find_clip(env._motion_lib, clip), t0)
             align_goal_with_clip(env)
             title = f"PD target = next frame of {Path(clip).name}"
-        frames = record(env, phase2.random_actions if policy == "random" else phase2.mocap_targets,
+        frames = record(env, check_heading_env.random_actions if policy == "random" else check_heading_env.mocap_targets,
                         args.seconds, show_mocap=clip is not None)
         out = out_dir / f"{name}.mp4"
         render(frames, parents, title, out, fps)

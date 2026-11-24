@@ -2,8 +2,8 @@
 
 Ce dossier contient ce que nous écrivons nous-mêmes. Le reste (simulateur Newton, personnage,
 contrôle PD, chargement de la mocap, PPO) vient de MimicKit, cloné dans `reference/MimicKit`.
-Le projet avance par phases (`CADRAGE.md`, section 4). Chacune a son script de validation
-`validation/phaseN.py` et son bilan `validation/phaseN.md`.
+Le projet avance par phases (`CADRAGE.md`, section 4). Chacune a ses scripts de validation
+dans `validation/` (voir `validation/README.md`), avec un bilan `.md` pour les phases 0 à 2.
 
 ## Phase 1 : les données « positives » du discriminateur
 
@@ -15,8 +15,8 @@ personnage simulé. Cette phase fournit ce qu'il voit, Φ(s), et les transitions
   repère du cap. `phi_paire(s, s')` donne l'entrée du discriminateur.
 - `expert.py` : tire des transitions de la mocap (`ExpertTransitions`) et convertit leurs
   vitesses vers la convention de Newton (seule la vitesse de la racine change, voir
-  `validation/phase2.md`, test 2).
-- Validation : `validation/phase1.py`, `validation/phase1_view_clip.py`, `validation/phase1.md`.
+  `validation/check_heading_env.md`, test 2).
+- Validation : `validation/check_disc_features.py`, `validation/video_mocap_clip.py`, `validation/check_disc_features.md`.
 
 ## Phase 2 : l'environnement Target Heading
 
@@ -27,10 +27,10 @@ tâche r_G (éq. 11) et décide de la fin des épisodes.
 - `heading_env.py` : la classe `TaskHeadingEnv`, qui hérite de l'environnement de MimicKit et ne
   change que le goal, son calendrier, la récompense, la durée des épisodes et la vitesse de la
   racine au démarrage. `build_heading_env(...)` la construit.
-- `../configs/amp_heading_humanoid_env.yaml` : sa configuration.
+- `../configs/run1/locomotion_env.yaml` : sa configuration.
 - `../configs/newton_test_nopd_240hz.yaml` : une config du simulateur pour un seul test (sans PD).
-- Validation : `validation/phase2.py`, `validation/phase2_videos.py` (vidéos pour le rapport),
-  `validation/phase2.md`. Les environnements des tests sont
+- Validation : `validation/check_heading_env.py`, `validation/video_dummy_policies.py` (vidéos pour le rapport),
+  `validation/check_heading_env.md`. Les environnements des tests sont
   construits par `validation/load_envs.py`, une seule fois par processus.
 
 ## Phase 3 : PPO seul (récompense de tâche uniquement)
@@ -42,11 +42,10 @@ que les épisodes démarrent depuis des poses de la mocap.
 
 - `run.py` : lance l'entraînement ou le test avec le `run.py` de MimicKit, après y avoir
   enregistré notre environnement (`task_heading`).
-- `../configs/ppo_heading_humanoid_agent.yaml` : l'agent PPO (réglages de l'AMP de MimicKit,
+- `../configs/run1/ppo_agent.yaml` : l'agent PPO (réglages de l'AMP de MimicKit,
   sans le discriminateur).
 - `../configs/ppo_heading_humanoid_args.txt` : les arguments du run.
-- Validation : `validation/phase3.py` (sur un dossier de run), `validation/phase3_videos.py`,
-  `validation/phase3.md`.
+- Validation : `validation/eval_policy.py` (sur un dossier de run), `validation/video_policy.py`.
 
 ## Utilisation
 

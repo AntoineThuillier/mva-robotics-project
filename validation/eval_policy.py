@@ -10,9 +10,9 @@ Test 2: normalized task return, protocol of Table 1: 32 episodes of 20 s, mean o
 Test 3: speed reached vs target speed v* = 1, 2, 3, 4, 5 m/s, direction fixed (Fig. 4, right).
 Test 4: falls: less than 10 % of the test episodes end with a fall.
 
-    python validation/phase3.py                                  # run outputs/phase3/ppo_heading
-    python validation/phase3.py --run_dir outputs/phase3/smoke --tests 1 2
-    python validation/phase3.py --run_dir outputs/rl/amp_walk         # rl/train.py runs too
+    python validation/eval_policy.py                                  # run outputs/phase3/ppo_heading
+    python validation/eval_policy.py --run_dir outputs/phase3/smoke --tests 1 2
+    python validation/eval_policy.py --run_dir outputs/rl/amp_walk         # rl/train.py runs too
 
 Run from the project root, with the project venv (.venv).
 """
@@ -32,7 +32,7 @@ from load_envs import DEVICE, PROJECT
 import learning.agent_builder as agent_builder
 import learning.base_agent as base_agent
 
-import phase2
+import check_heading_env
 
 EP_STEPS = 600                                        # 20 s at 30 Hz
 SPEEDS = [1.0, 2.0, 3.0, 4.0, 5.0]
@@ -65,7 +65,7 @@ def run_env(run_dir, num_envs):
 def load_policy(env, run_dir, model_file=None):
     """Policy of the run in test mode (mean action), from its saved agent_config.yaml.
     Two checkpoint formats: rl/train.py ({"ppo": ...}, our PPO) or MimicKit's agent (amp/run.py).
-    Returns policy(env) -> actions, usable with phase2.rollout."""
+    Returns policy(env) -> actions, usable with check_heading_env.rollout."""
     run_dir = Path(run_dir)
     model_file = str(model_file or run_dir / "model.pt")
     state = torch.load(model_file, map_location=DEVICE)
@@ -94,7 +94,7 @@ def load_policy(env, run_dir, model_file=None):
 
 
 def rollout_with_reward(env, policy, steps, seed):
-    """Like phase2.rollout, also summing the reward of each env until its episode ends."""
+    """Like check_heading_env.rollout, also summing the reward of each env until its episode ends."""
     n = env.get_num_envs()
     torch.manual_seed(seed)
     env.reset()
@@ -154,7 +154,7 @@ def test_return_and_falls(env, policy):
     ret, end_step, end_flag = rollout_with_reward(env, policy, EP_STEPS, seed=10)
     ret, end_step, end_flag = ret[:32], end_step[:32], end_flag[:32]      # 32 episodes, as in the article
     norm = ret / EP_STEPS
-    falls = (end_flag == phase2.FAIL)
+    falls = (end_flag == check_heading_env.FAIL)
     ok2 = norm.mean().item() > 0.5
     ok4 = falls.float().mean().item() < 0.1
     print(f"\n=== Test 2: normalized task return, {norm.numel()} episodes of 20 s ===")

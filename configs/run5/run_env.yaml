@@ -1,0 +1,51 @@
+# Copy of configs/run4/run_env.yaml: series 5 uses the same environment as series 4.
+# Same as configs/run1/run_env.yaml (Run), with the mocap clips shifted vertically so that their
+# stance feet are at the simulated contact level (align_mocap_feet, amp/foot_align.py; not in
+# the article). Checked by validation/check_foot_align.py.
+# Target Heading environment (amp/heading_env.py), Run (47 clips) dataset only (phase 4).
+# Same as configs/run1/locomotion_env.yaml (Locomotion = Walk + Run) except motion_file.
+# Based on MimicKit's data/envs/amp_steering_humanoid_env.yaml; differences are marked [CHANGED].
+
+env_name: "task_heading"                          # [CHANGED] built by amp.heading_env.build_heading_env
+
+char_file: "data/assets/humanoid/humanoid.xml"
+motion_file: "../../configs/datasets/dataset_humanoid_run.yaml"   # [CHANGED] Run (47 clips); relative to MimicKit's root
+camera_mode: "track"
+
+episode_length: 20.0                              # [CHANGED] s, DeepMimic (MimicKit: 10)
+enable_early_termination: True                    # fall = contact with the ground other than the feet
+contact_bodies: ["right_foot", "left_foot"]
+pose_termination: False
+rand_reset: True                                  # RSI: random clip, random time
+
+# character observation (MimicKit, unchanged)
+global_obs: False
+root_height_obs: True
+enable_phase_obs: False
+enable_tar_obs: False
+key_bodies: ["head", "right_hand", "left_hand", "right_foot", "left_foot"]
+
+ref_char_offset: [2.0, 0.0, 0.0]                  # m, reference character drawn next to ours (viewer only)
+init_pose: [0, 0, 0.882416, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.5708, 0, 0, 0, -1.5708, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+# MimicKit's AMP env keeps a history of states for its own discriminator (unused by us)
+num_disc_obs_steps: 2                             # [CHANGED] article: (s, s') (MimicKit: 10)
+
+# reset
+convert_init_vel: True                            # [CHANGED] root velocity: origin (mocap) -> center of mass (Newton)
+
+# mocap height [CHANGED]: each clip shifted by foot_contact_height - its stance level (amp/foot_align.py)
+align_mocap_feet: True
+foot_contact_height: -0.017                       # m, lowest point of the feet in contact in the simulation, Run gait (validation/check_foot_align.py, test 1: Walk -1.2, Locomotion -1.3, Run -1.7 cm)
+
+# goal: DeepMimic, args/train_amp_heading_humanoid3d_locomotion_args.txt and SceneHeadingAMP.cpp
+tar_speed_min: 1.0                                # [CHANGED] m/s (MimicKit: 0.5)
+tar_speed_max: 5.0
+tar_change_time_min: 0.2                          # [CHANGED] s between goal updates (MimicKit: new direction every 4-7 s)
+tar_change_time_max: 0.5                          #   here each update is a small drift, not a new direction
+heading_drift_std: 0.15                           # rad, per update
+sharp_turn_prob: 0.01                             # per update, new heading = heading + U(-pi, pi)
+speed_change_prob: 0.02                           # per update, new v* = U(tar_speed_min, tar_speed_max)
+
+# task reward, eq. 11: exp(-reward_vel_scale * (v* - d*.v_com)^2), 0 when moving backwards
+reward_vel_scale: 0.25                            # [CHANGED] (MimicKit: 0.5 on the 2D velocity error, + facing term)

@@ -6,18 +6,18 @@ eval_fk), Newton computes the bodies (eval_fk, no physics step), and we draw:
   - the skeleton as computed by Newton (blue), over the mocap skeleton (thin grey):
     they must coincide;
   - for the root, hands and feet, the velocity rebuilt from Newton's state (blue arrow,
-    see phase1.newton_body_origin_vel) and the velocity implied by the mocap motion
+    see check_disc_features.newton_body_origin_vel) and the velocity implied by the mocap motion
     between two frames (orange arrow): they must point the same way and have the same
     length (up to the one-frame finite difference).
 
-    python validation/phase1_view_clip.py                          # humanoid_run
-    python validation/phase1_view_clip.py --clip humanoid_walk
-    python validation/phase1_view_clip.py --clip sie/humanoid_sie_run_left12 --max_frames 240
-    python validation/phase1_view_clip.py --raw                    # without the velocity conversion
+    python validation/video_mocap_clip.py                          # humanoid_run
+    python validation/video_mocap_clip.py --clip humanoid_walk
+    python validation/video_mocap_clip.py --clip sie/humanoid_sie_run_left12 --max_frames 240
+    python validation/video_mocap_clip.py --raw                    # without the velocity conversion
 
 The velocities are written in eval_fk's convention (root center of mass, spherical joints in
 the parent frame), because the arrows are computed by eval_fk. The simulator itself reads
-spherical joint velocities in the child frame (see phase1.py, test 1b, and phase2.md, test 2).
+spherical joint velocities in the child frame (see check_disc_features.py, test 1b, and check_heading_env.md, test 2).
 
 Output: outputs/phase1/clip_<name>[_raw].mp4. Run from the project root, with .venv.
 """
@@ -33,7 +33,7 @@ from matplotlib.animation import FFMpegWriter
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import phase1 as p1                        # sets paths, cwd and imports MimicKit
+import check_disc_features as p1                        # sets paths, cwd and imports MimicKit
 
 PROJECT = p1.PROJECT
 TRACKED = ["pelvis", "right_hand", "left_hand", "right_foot", "left_foot"]

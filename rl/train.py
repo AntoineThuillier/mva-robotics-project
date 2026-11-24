@@ -1,9 +1,9 @@
 """Training loop (replaces MimicKit's learning/base_agent.py and run.py).
 
-    python rl/train.py --agent_config configs/ppo_heading_humanoid_agent.yaml --out_dir outputs/rl/ppo_heading
-    python rl/train.py --agent_config configs/ppo_heading_humanoid_agent.yaml --max_samples 2e6 --out_dir outputs/rl/smoke
+    python rl/train.py --agent_config configs/run1/ppo_agent.yaml --out_dir outputs/rl/ppo_heading
+    python rl/train.py --agent_config configs/run1/ppo_agent.yaml --max_samples 2e6 --out_dir outputs/rl/smoke
     python rl/train.py --mode test --model_file outputs/rl/ppo_heading/model.pt --num_envs 64
-    python rl/train.py --agent_config configs/amp_heading_humanoid_agent.yaml --out_dir outputs/rl/amp_heading
+    python rl/train.py --agent_config configs/run1/amp_agent.yaml --out_dir outputs/rl/amp_heading
 
 The agent config chooses the trainer: PPO only (Trainer below), or AMP (rl/amp.py) when it has
 the discriminator settings (disc_optimizer, ...).
@@ -15,7 +15,7 @@ One iteration (as MimicKit):
   3. during the first normalizer_samples samples, the observation normalizer takes in the
      observations of the rollout;
   4. every iters_per_output iterations: test_episodes episodes with the mean action, one line
-     in log.txt (same columns and format as MimicKit, so validation/phase3.py reads it), model
+     in log.txt (same columns and format as MimicKit, so validation/eval_policy.py reads it), model
      saved; then the training environments are reset.
 
 Uses from MimicKit only the environment (amp/heading_env.py, built on MimicKit's envs and
@@ -258,8 +258,8 @@ def resolve(path):
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--mode", choices=["train", "test"], default="train")
-    p.add_argument("--agent_config", default="configs/ppo_heading_humanoid_agent.yaml")
-    p.add_argument("--env_config", default="configs/amp_heading_humanoid_env.yaml")
+    p.add_argument("--agent_config", default="configs/run1/ppo_agent.yaml")
+    p.add_argument("--env_config", default="configs/run1/locomotion_env.yaml")
     p.add_argument("--engine_config", default="data/engines/newton_engine.yaml")
     p.add_argument("--num_envs", type=int, default=4096)
     p.add_argument("--max_samples", type=float, default=3e8)
@@ -276,10 +276,10 @@ def main():
     env_config = resolve(args.env_config)
     config = yaml.safe_load(open(agent_config))
     env = build_heading_env(args.num_envs, args.device, env_file=env_config, engine_file=resolve(args.engine_config))
-    if "disc_optimizer" in config:                     # AMP config (configs/amp_heading_humanoid_agent.yaml)
+    if "disc_optimizer" in config:                     # AMP config (configs/run1/amp_agent.yaml)
         from rl.amp import AMPTrainer
         trainer = AMPTrainer(env, config, args.device)
-    else:                                              # PPO only (configs/ppo_heading_humanoid_agent.yaml)
+    else:                                              # PPO only (configs/run1/ppo_agent.yaml)
         trainer = Trainer(env, config, args.device)
     print(f"{type(trainer).__name__}: {sum(p.numel() for p in trainer.ppo.parameters() if p.requires_grad)} "
           f"parameters in pi and V", flush=True)

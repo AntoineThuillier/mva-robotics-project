@@ -12,9 +12,9 @@ Trois tests, chacun en sous-commande :
 
 Exemples (depuis la racine du projet, venv MimicKit activé) :
 
-  python validation/phase0.py pretrained
-  python validation/phase0.py train --minutes 20
-  python validation/phase0.py compare outputs/phase0/train/train.out
+  python validation/check_mimickit_install.py pretrained
+  python validation/check_mimickit_install.py train --minutes 20
+  python validation/check_mimickit_install.py compare outputs/phase0/train/train.out
 
 MimicKit est cherché dans $MIMICKIT_DIR, sinon dans reference/MimicKit.
 """

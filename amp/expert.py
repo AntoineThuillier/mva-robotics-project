@@ -10,7 +10,7 @@ instant (frames are interpolated by MimicKit's MotionLib). Both states go throug
 Velocities are converted to Newton's conventions first (`mocap_velocities_to_newton`):
 the agent's states are read from Newton, so the expert states must speak the same
 language, otherwise the discriminator could tell them apart from the velocity
-convention alone. Only the root linear velocity differs (validation/phase2.md, test 2).
+convention alone. Only the root linear velocity differs (validation/check_heading_env.md, test 2).
 
 Like disc_features.py, import with MimicKit's `mimickit/` folder in sys.path.
 """
@@ -40,8 +40,8 @@ def mocap_velocities_to_newton(kin_char_model, root_com, root_rot, root_vel, roo
     Root: MimicKit gives the velocity of the root origin, Newton the velocity of the root
     center of mass: v_com = v_origin + ω × (R · root_com).
     Joints: unchanged. Newton's solver integrates and reads back spherical joint velocities
-    in the child frame (q0⁻¹·q1), like the mocap (measured in validation/phase2.py, test 2).
-    Only Newton's eval_fk reads them in the parent frame (validation/phase1.py, test 1b), and
+    in the child frame (q0⁻¹·q1), like the mocap (measured in validation/check_heading_env.py, test 2).
+    Only Newton's eval_fk reads them in the parent frame (validation/check_disc_features.py, test 1b), and
     it is not used to simulate. Hinge joints and the root angular velocity are the same in both.
     `kin_char_model` and `joint_rot` are kept in the signature for the callers; unused."""
     r = torch_util.quat_rotate(root_rot, root_com.to(root_rot).expand(root_rot.shape[:-1] + (3,)))

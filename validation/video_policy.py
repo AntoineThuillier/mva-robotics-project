@@ -1,6 +1,6 @@
 """Videos of the phase 3 policy (PPO, task reward only) in the Target Heading environment.
 
-Same drawing as validation/phase2_videos.py (blue: character, green: target direction with
+Same drawing as validation/video_dummy_policies.py (blue: character, green: target direction with
 length v*, orange: COM velocity, text: v*, speed along the target, r_G). Two mp4 files in
 <run_dir>/videos/, real time:
 
@@ -12,10 +12,10 @@ With --fixed_goal, only one video instead:
 
     fixed_goal.mp4 a fixed goal for the whole episode: 90 deg to the left of the character, 4 m/s
 
-    python validation/phase3_videos.py
-    python validation/phase3_videos.py --fixed_goal
-    python validation/phase3_videos.py --run_dir outputs/phase3/smoke --seconds 6
-    python validation/phase3_videos.py --run_dir outputs/rl/amp_walk  # rl/train.py runs too
+    python validation/video_policy.py
+    python validation/video_policy.py --fixed_goal
+    python validation/video_policy.py --run_dir outputs/phase3/smoke --seconds 6
+    python validation/video_policy.py --run_dir outputs/rl/amp_walk  # rl/train.py runs too
 
 Run from the project root, with the project venv (.venv).
 """
@@ -32,8 +32,8 @@ import load_envs                           # first: paths, cwd and environment c
 from load_envs import PROJECT
 from util import torch_util as tu
 
-import phase2_videos
-import phase3
+import video_dummy_policies
+import eval_policy
 
 SCRIPT = [  # (time in s, heading change in rad, new v* or None)
     (0.0, 0.0, 2.0),
@@ -73,8 +73,8 @@ def main():
     args = p.parse_args()
     run_dir = Path(args.run_dir) if Path(args.run_dir).is_absolute() else PROJECT / args.run_dir
 
-    env = phase3.run_env(run_dir, 1)
-    policy = phase3.load_policy(env, run_dir, args.model_file)
+    env = eval_policy.run_env(run_dir, 1)
+    policy = eval_policy.load_policy(env, run_dir, args.model_file)
     kin = env._kin_char_model
     parents = [kin.get_parent_id(j) for j in range(kin.get_num_joints())]
     out_dir = run_dir / "videos"
@@ -90,9 +90,9 @@ def main():
         if script is not None:
             env._tar_heading[:] = tu.calc_heading(env._ref_root_rot)     # start: the way the character faces
             pol = scripted(env, policy, script)
-        frames = phase2_videos.record(env, pol, args.seconds, show_mocap=False)
+        frames = video_dummy_policies.record(env, pol, args.seconds, show_mocap=False)
         out = out_dir / f"{name}.mp4"
-        phase2_videos.render(frames, parents, f"{run_dir.name} ({name} goal)", out, fps=30)
+        video_dummy_policies.render(frames, parents, f"{run_dir.name} ({name} goal)", out, fps=30)
         end = frames[-1]["end"]
         print(f"{name}: " + (f"episode ended at {end[0] / 30:.2f} s ({end[1]})" if end else "no fall") + f" -> {out}")
     env._heading_drift_std, env._sharp_turn_prob, env._speed_change_prob = saved
