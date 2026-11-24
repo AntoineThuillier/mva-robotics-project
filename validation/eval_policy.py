@@ -10,8 +10,8 @@ Test 2: normalized task return, protocol of Table 1: 32 episodes of 20 s, mean o
 Test 3: speed reached vs target speed v* = 1, 2, 3, 4, 5 m/s, direction fixed (Fig. 4, right).
 Test 4: falls: less than 10 % of the test episodes end with a fall.
 
-    python validation/eval_policy.py                                  # run outputs/phase3/ppo_heading
-    python validation/eval_policy.py --run_dir outputs/phase3/smoke --tests 1 2
+    python validation/eval_policy.py                                  # run outputs/mimickit/ppo_heading
+    python validation/eval_policy.py --run_dir outputs/mimickit/smoke --tests 1 2
     python validation/eval_policy.py --run_dir outputs/rl/amp_walk         # rl/train.py runs too
 
 Run from the project root, with the project venv (.venv).
@@ -228,7 +228,7 @@ TESTS = {
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--run_dir", default="outputs/phase3/ppo_heading", help="relative to the project root")
+    p.add_argument("--run_dir", default="outputs/mimickit/ppo_heading", help="relative to the project root")
     p.add_argument("--model_file", default=None, help="default: <run_dir>/model.pt")
     p.add_argument("--num_envs", type=int, default=64,
                    help="evaluation envs (tests 2 and 4 use the first 32, test 3 uses 60)")

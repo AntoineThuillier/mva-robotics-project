@@ -12,7 +12,7 @@ configs/
 │   └── locomotion_env.yaml    idem, Walk + Run (56 clips)
 ├── run1/ppo_agent.yaml        PPO seul (r_G seulement), run ppo_heading
 ├── datasets/                  listes de clips Walk et Run (lues par les *_env.yaml)
-├── ppo_heading_humanoid_args.txt   run PPO via le PPO de MimicKit (amp/run.py, outputs/phase3/)
+├── ppo_heading_humanoid_args.txt   run PPO via le PPO de MimicKit (amp/run.py, outputs/mimickit/)
 ├── amp_heading_humanoid_args.txt   run AMP via notre agent sur le PPO de MimicKit (amp/run.py)
 └── newton_test_nopd_240hz.yaml     moteur sans PD à 240 Hz, pour validation/check_heading_env.py (test 2)
 ```

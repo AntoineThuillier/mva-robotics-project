@@ -87,7 +87,7 @@ utilisent les mêmes fonctions de `torch_util`.
 | Walk | 27 537 | 0,47 | 0,92 | 1,43 |
 | Run | 24 505 | 0,65 | 2,42 | 4,36 |
 
-Figure : `outputs/phase1/root_speed_hist.png`. Run a une queue lente (démarrages et virages des
+Figure : `outputs/mocap/root_speed_hist.png`. Run a une queue lente (démarrages et virages des
 clips `sie`) : la plage « 1,5 à 5 m/s » du cadrage ne vaut que pour le cœur de la distribution.
 
 ### Test 4 : clips et durées
@@ -109,7 +109,7 @@ clips `sie`) : la plage « 1,5 à 5 m/s » du cadrage ne vaut que pour le cœur 
 ### Vidéo d'un clip joué dans Newton
 
 `humanoid_run`, 24 frames : positions Newton = mocap à 5e-7 m près. Vitesses des mains et des pieds :
-écart de 3e-6 m/s avec conversion, jusqu'à 5,6 m/s sans. Vidéos : `outputs/phase1/clip_*.mp4`.
+écart de 3e-6 m/s avec conversion, jusqu'à 5,6 m/s sans. Vidéos : `outputs/mocap/clip_*.mp4`.
 Les flèches de Newton sont calculées par `eval_fk` : les vitesses y sont donc écrites dans la
 convention de `eval_fk` (articulations dans le repère du parent), pas dans celle du solveur.
 

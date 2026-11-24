@@ -16,7 +16,7 @@ Test 7: expert transitions sampler (amp/expert.py), end to end through Newton.
     python validation/check_disc_features.py --num_envs 256
     python validation/check_disc_features.py --tests 3 4         # only some tests
 
-Outputs (figures) go to outputs/phase1/.
+Outputs (figures) go to outputs/mocap/.
 
 Run from the project root, with the project venv (.venv).
 """
@@ -643,7 +643,7 @@ def main():
     p.add_argument("--tests", nargs="+", default=list(TESTS), choices=list(TESTS), help="tests to run (default: all)")
     args = p.parse_args()
 
-    out_dir = PROJECT / "outputs" / "phase1"
+    out_dir = PROJECT / "outputs" / "mocap"
     out_dir.mkdir(parents=True, exist_ok=True)
     eng, kin, ml, cid = build_env(args.num_envs)
     n = args.num_envs

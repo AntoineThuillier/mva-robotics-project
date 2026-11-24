@@ -142,7 +142,7 @@ viendra des phases 3 et 4.
 
 ## Vidéos (pour le rapport)
 
-`validation/video_dummy_policies.py` produit trois vidéos de 3 s, ralenties ×0,5, dans `outputs/phase2/`
+`validation/video_dummy_policies.py` produit trois vidéos de 3 s, ralenties ×0,5, dans `outputs/heading_env/`
 (non versionné). Le personnage simulé est en bleu, le clip suivi en gris, la direction cible en
 vert (longueur proportionnelle à v*), la vitesse du centre de masse en orange ; v*, la vitesse
 dans la direction cible et r_G sont affichés à chaque pas. Pour le suivi, le goal part aligné

@@ -16,4 +16,4 @@
 --visualize false
 --save_int_models true
 --logger txt
---out_dir outputs/phase4/amp_heading
+--out_dir outputs/mimickit/amp_heading

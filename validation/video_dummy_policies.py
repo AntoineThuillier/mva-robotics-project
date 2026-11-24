@@ -1,6 +1,6 @@
 """Videos of phase 2's dummy policies in the Target Heading environment (for the report).
 
-Three mp4 files in outputs/phase2/, slowed down x0.5:
+Three mp4 files in outputs/heading_env/, slowed down x0.5:
 
     random.mp4       uniform random actions: the character falls (test 1)
     track_walk.mp4   PD target = next frame of a walking clip (test 2)
@@ -141,7 +141,7 @@ def main():
     env = load_envs.heading_env(1)
     kin = env._kin_char_model
     parents = [kin.get_parent_id(j) for j in range(kin.get_num_joints())]
-    out_dir = PROJECT / "outputs" / "phase2"
+    out_dir = PROJECT / "outputs" / "heading_env"
     out_dir.mkdir(parents=True, exist_ok=True)
     fps = 30 * args.slowdown
 

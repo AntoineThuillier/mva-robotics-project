@@ -1,9 +1,9 @@
 """Train or test a policy on our environments with MimicKit's run.py (phase 3 and later).
 
     python amp/run.py --arg_file configs/ppo_heading_humanoid_args.txt
-    python amp/run.py --arg_file configs/ppo_heading_humanoid_args.txt --max_samples 2000000 --out_dir outputs/phase3/smoke
+    python amp/run.py --arg_file configs/ppo_heading_humanoid_args.txt --max_samples 2000000 --out_dir outputs/mimickit/smoke
     python amp/run.py --arg_file configs/ppo_heading_humanoid_args.txt --mode test --num_envs 32 \
-        --model_file outputs/phase3/ppo_heading/model.pt --visualize true
+        --model_file outputs/mimickit/ppo_heading/model.pt --visualize true
 
 MimicKit's env_builder and agent_builder only know MimicKit's environments and agents: this
 script adds ours ("task_heading", amp/heading_env.py; agent "AMP_heading", amp/discriminator.py),

@@ -19,7 +19,8 @@ des vidéos. Chaque script décrit ses tests et ses options dans sa docstring (`
 | `load_envs.py` | module commun, construit les environnements une fois par processus | |
 
 Bilans écrits : `check_mimickit_install.md`, `check_disc_features.md` et `check_heading_env.md`.
-Les dossiers de sortie gardent leurs noms d'origine : `outputs/phase0/` à `outputs/phase3/`.
+Dossiers de sortie : `outputs/mimickit_install/` (installation), `outputs/mocap/` (clips, vitesses),
+`outputs/heading_env/` (politiques factices), `outputs/mimickit/` (runs via le PPO de MimicKit).
 
 ## Après un run d'entraînement
 

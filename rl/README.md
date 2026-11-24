@@ -50,7 +50,7 @@ la phase 3 (récompense de tâche seule, mêmes réglages, même graine) avec `r
 
 300 M échantillons par défaut. La phase 3 avait pris 3,6 h sur ta 3070.
 
-**Ce qu'on attend** : la même courbe que `outputs/phase3/ppo_heading/log.txt`, au bruit près
+**Ce qu'on attend** : la même courbe que `outputs/mimickit/ppo_heading/log.txt`, au bruit près
 (les tirages aléatoires ne sont pas les mêmes). Repères de la phase 3 :
 
 | Échantillons | Durée des épisodes de test | Retour de test |

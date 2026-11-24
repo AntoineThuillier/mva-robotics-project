@@ -23,7 +23,7 @@ versions, avant le passage au venv du projet.
 ```bash
 .venv/bin/python validation/check_mimickit_install.py pretrained              # rejoue le modèle pré-entraîné
 .venv/bin/python validation/check_mimickit_install.py train --minutes 180     # entraînement + comparaison au log
-.venv/bin/python validation/check_mimickit_install.py compare outputs/phase0/train/train.out
+.venv/bin/python validation/check_mimickit_install.py compare outputs/mimickit_install/train/train.out
 ```
 
 ## Résultats
@@ -75,6 +75,6 @@ mesuré est un minorant.
 
 ## Sorties (non versionnées)
 
-- `outputs/phase0/pretrained/test.out`
-- `outputs/phase0/train/` : `model.pt`, `log.txt`, `train.out` (run de 3 h)
-- `outputs/phase0/train_3h.report` : rapport de `check_mimickit_install.py`
+- `outputs/mimickit_install/pretrained/test.out`
+- `outputs/mimickit_install/train/` : `model.pt`, `log.txt`, `train.out` (run de 3 h)
+- `outputs/mimickit_install/train_3h.report` : rapport de `check_mimickit_install.py`

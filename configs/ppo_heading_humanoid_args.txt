@@ -16,4 +16,4 @@
 --visualize false
 --save_int_models true
 --logger txt
---out_dir outputs/phase3/ppo_heading
+--out_dir outputs/mimickit/ppo_heading

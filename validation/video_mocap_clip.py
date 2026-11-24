@@ -19,7 +19,7 @@ The velocities are written in eval_fk's convention (root center of mass, spheric
 the parent frame), because the arrows are computed by eval_fk. The simulator itself reads
 spherical joint velocities in the child frame (see check_disc_features.py, test 1b, and check_heading_env.md, test 2).
 
-Output: outputs/phase1/clip_<name>[_raw].mp4. Run from the project root, with .venv.
+Output: outputs/mocap/clip_<name>[_raw].mp4. Run from the project root, with .venv.
 """
 
 import argparse
@@ -104,7 +104,7 @@ def main():
 
     # ---- render ----
     P, Q, V, W = (x.cpu().numpy() for x in (bp_newton, bp_mocap, bv_newton, v_mocap))
-    out = PROJECT / "outputs" / "phase1" / f"clip_{Path(args.clip).name}{'_raw' if args.raw else ''}.mp4"
+    out = PROJECT / "outputs" / "mocap" / f"clip_{Path(args.clip).name}{'_raw' if args.raw else ''}.mp4"
     out.parent.mkdir(parents=True, exist_ok=True)
     fig = plt.figure(figsize=(7, 7))
     ax = fig.add_subplot(projection="3d")

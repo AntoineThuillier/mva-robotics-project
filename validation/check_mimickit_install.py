@@ -14,7 +14,7 @@ Exemples (depuis la racine du projet, venv MimicKit activé) :
 
   python validation/check_mimickit_install.py pretrained
   python validation/check_mimickit_install.py train --minutes 20
-  python validation/check_mimickit_install.py compare outputs/phase0/train/train.out
+  python validation/check_mimickit_install.py compare outputs/mimickit_install/train/train.out
 
 MimicKit est cherché dans $MIMICKIT_DIR, sinon dans reference/MimicKit.
 """
@@ -33,7 +33,7 @@ PROJECT = Path(__file__).resolve().parents[1]
 MIMICKIT = Path(os.environ.get("MIMICKIT_DIR", PROJECT / "reference" / "MimicKit")).resolve()
 REF_LOG = MIMICKIT / "data" / "logs" / "amp_steering_humanoid_log.txt"
 MODEL = MIMICKIT / "data" / "models" / "amp_steering_humanoid_model.pt"
-OUT = PROJECT / "outputs" / "phase0"
+OUT = PROJECT / "outputs" / "mimickit_install"
 
 BASE_ARGS = [
     "--arg_file", "args/amp_steering_humanoid_args.txt",

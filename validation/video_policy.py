@@ -14,7 +14,7 @@ With --fixed_goal, only one video instead:
 
     python validation/video_policy.py
     python validation/video_policy.py --fixed_goal
-    python validation/video_policy.py --run_dir outputs/phase3/smoke --seconds 6
+    python validation/video_policy.py --run_dir outputs/mimickit/smoke --seconds 6
     python validation/video_policy.py --run_dir outputs/rl/amp_walk  # rl/train.py runs too
 
 Run from the project root, with the project venv (.venv).
@@ -66,7 +66,7 @@ def scripted(env, policy, script):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--run_dir", default="outputs/phase3/ppo_heading", help="relative to the project root")
+    p.add_argument("--run_dir", default="outputs/mimickit/ppo_heading", help="relative to the project root")
     p.add_argument("--model_file", default=None, help="default: <run_dir>/model.pt")
     p.add_argument("--seconds", type=float, default=20.0)
     p.add_argument("--fixed_goal", action="store_true", help="only fixed_goal.mp4 (FIXED_SCRIPT)")
