@@ -1,0 +1,220 @@
+C:\Users\antoi\Desktop\MVA\Robotics\mva-robotics-project\.venv\Lib\site-packages\torch\jit\_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+
+=== Test 1: learning curve, 47 outputs, 300.0 M samples ===
+  test return: 4.6 -> 490.8 (max 600)
+  test episode length: 0.85 s -> 19.95 s  (must end > 15 s)
+  figure: C:\Users\antoi\Desktop\MVA\Robotics\mva-robotics-project\outputs\rl\amp_walk\learning_curve.png
+  => OK
+Warp 1.12.1 initialized:
+   CUDA Toolkit 12.9, Driver 13.2
+   Devices:
+     "cpu"      : "AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD"
+     "cuda:0"   : "NVIDIA GeForce RTX 3070" (8 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     C:\Users\antoi\Desktop\MVA\Robotics\mva-robotics-project\reference\warpcache
+Building 1/64 envs
+Building 2/64 envs
+Building 3/64 envs
+Building 4/64 envs
+Building 5/64 envs
+Building 6/64 envs
+Building 7/64 envs
+Building 8/64 envs
+Building 9/64 envs
+Building 10/64 envs
+Building 11/64 envs
+Building 12/64 envs
+Building 13/64 envs
+Building 14/64 envs
+Building 15/64 envs
+Building 16/64 envs
+Building 17/64 envs
+Building 18/64 envs
+Building 19/64 envs
+Building 20/64 envs
+Building 21/64 envs
+Building 22/64 envs
+Building 23/64 envs
+Building 24/64 envs
+Building 25/64 envs
+Building 26/64 envs
+Building 27/64 envs
+Building 28/64 envs
+Building 29/64 envs
+Building 30/64 envs
+Building 31/64 envs
+Building 32/64 envs
+Building 33/64 envs
+Building 34/64 envs
+Building 35/64 envs
+Building 36/64 envs
+Building 37/64 envs
+Building 38/64 envs
+Building 39/64 envs
+Building 40/64 envs
+Building 41/64 envs
+Building 42/64 envs
+Building 43/64 envs
+Building 44/64 envs
+Building 45/64 envs
+Building 46/64 envs
+Building 47/64 envs
+Building 48/64 envs
+Building 49/64 envs
+Building 50/64 envs
+Building 51/64 envs
+Building 52/64 envs
+Building 53/64 envs
+Building 54/64 envs
+Building 55/64 envs
+Building 56/64 envs
+Building 57/64 envs
+Building 58/64 envs
+Building 59/64 envs
+Building 60/64 envs
+Building 61/64 envs
+Building 62/64 envs
+Building 63/64 envs
+Building 64/64 envs
+
+
+Loading 1/9 motion files: data/motions/humanoid/humanoid_walk.pkl
+Loading 2/9 motion files: data/motions/humanoid/long/humanoid_long_walk0.pkl
+Loading 3/9 motion files: data/motions/humanoid/long/humanoid_long_walk1.pkl
+Loading 4/9 motion files: data/motions/humanoid/long/humanoid_long_walk2.pkl
+Loading 5/9 motion files: data/motions/humanoid/long/humanoid_long_walk3.pkl
+Loading 6/9 motion files: data/motions/humanoid/long/humanoid_long_walk0_mirror.pkl
+Loading 7/9 motion files: data/motions/humanoid/long/humanoid_long_walk1_mirror.pkl
+Loading 8/9 motion files: data/motions/humanoid/long/humanoid_long_walk2_mirror.pkl
+Loading 9/9 motion files: data/motions/humanoid/long/humanoid_long_walk3_mirror.pkl
+Loaded motion file: ../../configs/datasets/dataset_humanoid_walk.yaml
+Loaded 9 motions with a total length of 229.400s.
+Building 1/64 objs
+Building 2/64 objs
+Building 3/64 objs
+Building 4/64 objs
+Building 5/64 objs
+Building 6/64 objs
+Building 7/64 objs
+Building 8/64 objs
+Building 9/64 objs
+Building 10/64 objs
+Building 11/64 objs
+Building 12/64 objs
+Building 13/64 objs
+Building 14/64 objs
+Building 15/64 objs
+Building 16/64 objs
+Building 17/64 objs
+Building 18/64 objs
+Building 19/64 objs
+Building 20/64 objs
+Building 21/64 objs
+Building 22/64 objs
+Building 23/64 objs
+Building 24/64 objs
+Building 25/64 objs
+Building 26/64 objs
+Building 27/64 objs
+Building 28/64 objs
+Building 29/64 objs
+Building 30/64 objs
+Building 31/64 objs
+Building 32/64 objs
+Building 33/64 objs
+Building 34/64 objs
+Building 35/64 objs
+Building 36/64 objs
+Building 37/64 objs
+Building 38/64 objs
+Building 39/64 objs
+Building 40/64 objs
+Building 41/64 objs
+Building 42/64 objs
+Building 43/64 objs
+Building 44/64 objs
+Building 45/64 objs
+Building 46/64 objs
+Building 47/64 objs
+Building 48/64 objs
+Building 49/64 objs
+Building 50/64 objs
+Building 51/64 objs
+Building 52/64 objs
+Building 53/64 objs
+Building 54/64 objs
+Building 55/64 objs
+Building 56/64 objs
+Building 57/64 objs
+Building 58/64 objs
+Building 59/64 objs
+Building 60/64 objs
+Building 61/64 objs
+Building 62/64 objs
+Building 63/64 objs
+Building 64/64 objs
+
+Initializing simulation...
+Module validate_and_correct_inertia_kernel_24b63428 24b6342 load on device 'cuda:0' took 2.05 ms  (cached)
+Module newton._src.sim.articulation 756343c load on device 'cuda:0' took 5.34 ms  (cached)
+Module newton._src.sim.graph_coloring a44bf79 load on device 'cpu' took 1.43 ms  (cached)
+Module newton._src.solvers.mujoco.kernels 93c4397 load on device 'cuda:0' took 5.09 ms  (cached)
+Module repeat_array_kernel_a65abfa6 f59532f load on device 'cuda:0' took 1.80 ms  (cached)
+Module repeat_array_kernel_a65abfa6 d0f6264 load on device 'cuda:0' took 1.50 ms  (cached)
+Module repeat_array_kernel_a65abfa6 a248d7d load on device 'cuda:0' took 1.46 ms  (cached)
+Module repeat_array_kernel_a65abfa6 cddcb35 load on device 'cuda:0' took 1.54 ms  (cached)
+Module repeat_array_kernel_a65abfa6 dfa4b14 load on device 'cuda:0' took 1.52 ms  (cached)
+Module repeat_array_kernel_a65abfa6 4f88518 load on device 'cuda:0' took 2.24 ms  (cached)
+Module repeat_array_kernel_a65abfa6 aef7f0f load on device 'cuda:0' took 2.17 ms  (cached)
+Module mujoco_warp._src.io a7593be load on device 'cuda:0' took 29.75 ms  (cached)
+Module mujoco_warp._src.smooth 493b239 load on device 'cuda:0' took 5.19 ms  (cached)
+Module engines.newton_engine dcf662a load on device 'cuda:0' took 4.66 ms  (cached)
+Module mujoco_warp._src.collision_driver 4d8b905 load on device 'cuda:0' took 4.03 ms  (cached)
+Module _nxn_broadphase__locals__kernel_d35c97fa d35c97f load on device 'cuda:0' took 5.10 ms  (cached)
+Module ccd_kernel_builder__locals__ccd_kernel_61612c6d 61612c6 load on device 'cuda:0' took 3.22 ms  (cached)
+Module _primitive_narrowphase__locals__primitive_narrowphase_610ce499 610ce49 load on device 'cuda:0' took 2.36 ms  (cached)
+Module mujoco_warp._src.constraint bbe4f30 load on device 'cuda:0' took 6.66 ms  (cached)
+Module _actuator_velocity__locals__actuator_velocity_e723b2cf 31b777e load on device 'cuda:0' took 6.85 ms  (cached)
+Module mujoco_warp._src.passive 7fb8524 load on device 'cuda:0' took 5.08 ms  (cached)
+Module mujoco_warp._src.forward 291f859 load on device 'cuda:0' took 4.23 ms  (cached)
+Module mujoco_warp._src.support 343d1ae load on device 'cuda:0' took 3.95 ms  (cached)
+Module mujoco_warp._src.solver c8aea8f load on device 'cuda:0' took 4.44 ms  (cached)
+Module solve_init_jaref__locals__kernel_c3ef396b c3ef396 load on device 'cuda:0' took 1.85 ms  (cached)
+Module mul_m_sparse__locals___mul_m_sparse_3795f265 3795f26 load on device 'cuda:0' took 1.71 ms  (cached)
+Module update_constraint_efc__locals__kernel_bd6c6bff bd6c6bf load on device 'cuda:0' took 1.87 ms  (cached)
+Module update_constraint_gauss_cost__locals__kernel_0a3a92e8 0a3a92e load on device 'cuda:0' took 2.01 ms  (cached)
+Module update_gradient_JTDAJ_sparse_tiled__locals__kernel_27ccc447 78cb8c9 load on device 'cuda:0' took 130.29 ms  (cached)
+Module update_gradient_cholesky_blocked__locals__kernel_bb004999 fbd28cb load on device 'cuda:0' took 785.54 ms  (cached)
+Module linesearch_jv_fused__locals__kernel_b6213edc b6213ed load on device 'cuda:0' took 1.69 ms  (cached)
+Module linesearch_iterative__locals__kernel_6507db42 4db0ef8 load on device 'cuda:0' took 6.26 ms  (cached)
+Module update_constraint_efc__locals__kernel_cdc96abb cdc96ab load on device 'cuda:0' took 4.58 ms  (cached)
+Module mujoco_warp._src.derivative f391b97 load on device 'cuda:0' took 3.47 ms  (cached)
+Char 0 properties
+	DoFs: 28
+	Mass: 50.050 kg
+
+Module newton._src.sensors.sensor_contact d7cd052 load on device 'cuda:0' took 12.85 ms  (cached)
+
+=== Test 2: normalized task return, 32 episodes of 20 s ===
+  mean 0.797, std 0.075, min 0.645, max 0.921
+  to compare by hand with Fig. 5 (No Data); article Table 1 with AMP: Locomotion 0.90
+  => OK (sanity threshold 0.5)
+
+=== Test 4: falls ===
+  0/32 episodes end with a fall (mean episode length 20.0 s)
+  => OK (must be < 10 %)
+
+=== Test 3: speed along the target direction vs v* (goal frozen, 12 episodes per v*) ===
+  v* = 1 m/s: reached 0.77 m/s  => OK
+  v* = 2 m/s: reached 1.36 m/s  => FAIL
+  v* = 3 m/s: reached 2.08 m/s  => FAIL
+  v* = 4 m/s: reached 3.94 m/s  => OK
+  v* = 5 m/s: reached 4.77 m/s  => OK
+  => FAIL (within 0.5 m/s)
+
+=== Summary ===
+  test 1   learning curve                                OK
+  test 2   normalized task return                        OK
+  test 3   speed vs target speed                         FAIL
+  test 4   falls < 10 %                                  OK

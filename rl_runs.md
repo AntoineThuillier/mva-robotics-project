@@ -18,6 +18,11 @@ passe de 0,28 à 20 M échantillons à 0,09 à 50 M et 0,04 en fin de run. D rec
 transition de l'agent (D ≈ −1, précision de D sur l'agent ≈ 1), donc r_S n'a plus de dispersion et ne
 guide plus le style. Première hypothèse : D est trop entraîné.
 
+**Validation.** Retour normalisé 0,80 (Walk), 0,88 (Run), 0,89 (Locomotion), et 0,93 pour le PPO seul
+(`ppo_heading`). Une seule chute (1/32 épisodes, Run). Run et Locomotion atteignent les vitesses de 1 à
+5 m/s à 0,5 m/s près. Walk échoue à 2 et 3 m/s (1,36 et 2,08 m/s atteints), comme en série 3 : les
+clips Walk ne dépassent pas 1,5 m/s environ, et le style freine la politique au-delà.
+
 ## Série 2 : D entraîné 4 fois moins
 
 **Process.** `disc_steps` passe de 32 à 8. Chaque paire de l'agent du replay buffer est vue environ
@@ -28,6 +33,10 @@ guide plus le style. Première hypothèse : D est trop entraîné.
 79 M (r_S comparable à la série 1) et Locomotion n'a pas été lancé. D trouve donc toujours un critère
 fiable : on essaie de le régulariser.
 
+**Validation.** `amp_run_2` : retour normalisé 0,90, aucune chute, vitesses cibles de 1 à 5 m/s
+atteintes à 0,4 m/s près. Ce suivi presque parfait vient de r_S éteint : la politique n'optimise que la
+tâche.
+
 ## Série 3 : D régularisé comme dans MimicKit
 
 **Process.** Série 2 + la régularisation de D de l'AMP de MimicKit (absente de l'article) : un weight
@@ -37,6 +46,11 @@ decay de 1e-4 et une pénalité de 0,01 sur les poids de la dernière couche de 
 fin de run. Walk (r_S 0,27) et Locomotion (0,32) restent bons. L'explication est mécanique : avec SGD et
 un pas de 1e-5, le weight decay retire 1e-9 par pas, la pénalité vaut environ 0,004, et la perte LSGAN
 borne déjà les sorties de D. Hypothèse suivante : l'agent change trop vite pour que D le suive.
+
+**Validation.** Retour normalisé 0,81 (Walk), 0,90 (Run), 0,88 (Locomotion), aucune chute. Walk
+échoue au test de vitesse : 2,44 m/s pour 3 m/s demandés (seuil 0,5 m/s). Les clips Walk ne vont pas
+au-delà de 1,5 m/s environ, et le style freine la politique entre marche et course. Le seuil a été
+fixé pour le PPO seul : pour AMP, on lit le chiffre plutôt que le verdict.
 
 ## Série 4 : pas de la politique de l'article, pieds alignés
 
@@ -54,6 +68,8 @@ entrées de Φ ont un écart-type au plancher (1e-4). Le moindre mouvement du co
 alors ±10 en entrée de D : un indice parfait, que l'agent ne peut pas effacer. Walk et Locomotion ont
 des clips au cou mobile, d'où l'absence du problème.
 
+**Validation.** Aucune : les runs sont arrêtés ou pas encore faits.
+
 ## Série 5 : entrées constantes masquées
 
 **Process.** Série 2 + pieds alignés + `disc_mask_constant` : les entrées de Φ dont l'écart-type sur la
@@ -61,10 +77,16 @@ mocap est inférieur à 1e-3 sont mises à 0 pour D, côté mocap comme côté a
 18 entrées du cou. Sur Walk et Locomotion, une seule entrée est masquée, et elle est constante pour
 l'agent aussi. D doit juger le style sur le reste du corps, qui est imitable.
 
-**Résultats et limites.** En cours. Critère : r_S ne doit pas s'effondrer vers 0,05 entre 13 et 90 M
-sur Run, et Walk et Locomotion doivent rester au niveau de la série 2. Une différence de style réelle
-subsiste : l'abdomen de l'agent tourne plus que celui de la mocap (−25° à +40° contre ±11°). C'est le
-prochain indice que D pourrait exploiter.
+**Résultats et limites.** Sur Run, **r_S ne s'effondre plus** : il reste entre 0,40 et 0,54 sur tout
+le run (0,04 à 0,07 en séries 1 à 3), et D sur l'agent reste vers −0,55 au lieu de −1. D reconnaît
+encore l'agent à 99 %, sans saturer : r_S garde sa dispersion et guide le style. Une différence réelle
+subsiste, l'abdomen de l'agent tourne plus que celui de la mocap (−25° à +40° contre ±11°).
+Walk et Locomotion : à venir.
+
+**Validation.** `amp_run_5` : retour normalisé 0,83 (0,90 en séries 2 et 3), aucune chute. Le test de
+vitesse échoue à 2 m/s (1,50 m/s atteint), et toutes les vitesses sont un peu sous la cible. C'est le
+compromis attendu d'AMP : le style est actif et retient la politique près de la mocap, au prix d'un
+peu de tâche. Le creux à 2 m/s tomberait entre marche et course (hypothèse). À confirmer sur les vidéos.
 
 ## Série 6 : normaliseur de D sur agent + mocap
 
@@ -76,3 +98,5 @@ celui des mouvements de l'agent (environ 1°), donc un cou à 1° donne une entr
 
 **Résultats et limites.** À venir. Avec la série 5, elle dira s'il faut retirer l'indice (masque) ou
 s'il suffit de le ramener à une échelle normale (normalisation de MimicKit).
+
+**Validation.** À venir.
