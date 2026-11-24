@@ -1,6 +1,6 @@
 """AMP on our PPO (article sections 5 and 6.3, Algorithm 1; Table 4 for the settings).
 
-    python rl/train.py --agent_config configs/amp_heading_humanoid_agent.yaml --out_dir outputs/rl/amp_heading
+    python rl/train.py --agent_config configs/run1/amp_agent.yaml --out_dir outputs/rl/amp_heading
 
 The discriminator D judges transitions (s, s') through the pair (Φ(s), Φ(s')) of
 amp/disc_features.py (210 numbers): info["disc_obs"] for the agent, env.fetch_disc_obs_demo(n)
@@ -13,14 +13,34 @@ AMPTrainer = Trainer (rl/train.py) + three hooks, one iteration:
                   becomes w_G r_G + w_S r_S; disc_replay_insert random agent pairs go into the
                   replay buffer B;
   after_update    after PPO: disc_steps updates of D, each on disc_batch_size fresh mocap pairs
-                  and as many agent pairs drawn from B, loss = eq. 6 + eq. 8.
+                  and as many agent pairs drawn from B, loss = eq. 6 + eq. 8 (+ the optional
+                  logit penalty below).
+
+Optional regularization of D, not in the article (from MimicKit's AMP, amp_agent.py), off by
+default: disc_logit_reg * sum of the squared weights of D's output layer, and a weight_decay in
+disc_optimizer. Used by configs/run3/amp_agent.yaml (runs *_3).
 
 Batch sizes adapted to 4096 GPU envs (131k transitions per iteration instead of the article's
 4096): B keeps the article's size (1e5) and receives 4096 pairs per iteration, so it spans ~25
 iterations as in the article; D sees as many agent pairs per iteration as the rollout produced.
 D's input is normalized with a mean and std computed once on disc_norm_samples mocap pairs, then
 frozen. Same algorithm as amp/discriminator.py (built on MimicKit's PPO), checked against it by
-validation/rl_check.py, test 5.
+validation/check_rl_vs_mimickit.py, test 5.
+
+Optional, not in the article, off by default: disc_mask_constant: True sets to 0 (after
+normalization, for the mocap and the agent alike) the entries of Φ whose std over the mocap is
+below CONSTANT_STD. Such an entry carries no style information, but with the std floored at
+min_std (1e-4) any agent deviation becomes +-clip (10) and gives D a perfect cue the agent cannot
+remove. Case of the Run dataset: the neck of all its clips is frozen at exactly 0 (rotation and
+velocity, 18 entries of the pair), the agent's moves by 1-2 degrees, and D separates them from
+the start (style reward collapse of amp_run, amp_run_2..4). Used by runs *_5.
+
+Optional, not in the article, off by default: disc_norm_agent: True updates D's normalizer as
+MimicKit does (amp_agent.py): at each iteration, all the agent pairs of the rollout and as many
+fresh mocap pairs are recorded, and the mean and std are updated after D's update, as long as
+sample_count < normalizer_samples (then frozen). The initial fit on disc_norm_samples mocap pairs
+is kept (MimicKit starts from mean 0, std 1). With it, an entry that is constant in the mocap gets
+the std of the agent's values, so a small deviation stays a small input. Used by runs *_6.
 """
 
 import torch
@@ -29,6 +49,8 @@ from rl.nets import mlp
 from rl.normalizer import Normalizer
 from rl.ppo import build_optimizer
 from rl.train import Trainer
+
+CONSTANT_STD = 1e-3     # disc_mask_constant: entries of Φ with a smaller std over the mocap are masked
 
 
 # ===================== the article's equations =====================
@@ -99,6 +121,7 @@ class AMPTrainer(Trainer):
         self.task_reward_weight = float(config["task_reward_weight"])     # w_G
         self.style_reward_weight = float(config["style_reward_weight"])   # w_S
         self.w_gp = float(config["disc_grad_penalty"])
+        self.logit_reg = float(config.get("disc_logit_reg", 0.0))         # not in the article (MimicKit)
         self.disc_batch_size = int(config["disc_batch_size"])
         self.disc_steps = int(config["disc_steps"])
         self.disc_replay_insert = int(config["disc_replay_insert"])
@@ -116,11 +139,33 @@ class AMPTrainer(Trainer):
             self.disc_norm.record(env.fetch_disc_obs_demo(batch))
             n += batch
         self.disc_norm.update()
+        self.mask_constant = bool(config.get("disc_mask_constant", False))   # not in the article
+        self.set_disc_mask()
+        self.norm_agent = bool(config.get("disc_norm_agent", False))         # not in the article (MimicKit)
+        if self.norm_agent:
+            print(f"disc_norm_agent: D's normalizer updated with agent + mocap pairs until "
+                  f"{self.normalizer_samples:.0e} samples")
+
+    def update_disc_norm(self):
+        """disc_norm_agent: the normalizer of D is still updated at this iteration."""
+        return self.norm_agent and self.sample_count < self.normalizer_samples
+
+    def set_disc_mask(self):
+        """Mask of the entries of Φ given to D (1 kept, 0 masked), from the frozen std."""
+        self.disc_mask = torch.ones_like(self.disc_norm.std)
+        if self.mask_constant:
+            self.disc_mask = (self.disc_norm.std >= CONSTANT_STD).float()
+            print(f"disc_mask_constant: {int((self.disc_mask == 0).sum())} of {self.disc_mask.numel()} entries of Phi "
+                  f"masked (mocap std < {CONSTANT_STD}): {(self.disc_mask == 0).nonzero().flatten().tolist()}")
+
+    def normalize_disc_obs(self, disc_obs):
+        """D's input: normalized disc observations, constant entries masked if disc_mask_constant."""
+        return self.disc_norm.normalize(disc_obs) * self.disc_mask
 
     @torch.no_grad()
     def eval_disc(self, disc_obs, batch_size=65536):
         """D on raw disc observations, by minibatches, without gradient. (n,)."""
-        return torch.cat([self.disc(self.disc_norm.normalize(disc_obs[i:i + batch_size]))
+        return torch.cat([self.disc(self.normalize_disc_obs(disc_obs[i:i + batch_size]))
                           for i in range(0, disc_obs.shape[0], batch_size)])
 
     # ---------- hooks ----------
@@ -134,6 +179,9 @@ class AMPTrainer(Trainer):
         self.buf.set("reward", self.task_reward_weight * task_r + self.style_reward_weight * style_r)
         idx = torch.randperm(disc_obs.shape[0], device=self.device)[:self.disc_replay_insert]
         self.replay.push(disc_obs[idx])
+        if self.update_disc_norm():                                         # MimicKit: agent + as many mocap pairs
+            self.disc_norm.record(disc_obs)
+            self.disc_norm.record(self.env.fetch_disc_obs_demo(disc_obs.shape[0]))
         return {"task_reward_mean": task_r.mean(), "style_reward_mean": style_r.mean()}
 
     def after_update(self):
@@ -141,15 +189,17 @@ class AMPTrainer(Trainer):
         self.disc.train()
         sums = {}
         for _ in range(self.disc_steps):
-            mocap = self.disc_norm.normalize(self.env.fetch_disc_obs_demo(self.disc_batch_size))
-            agent = self.disc_norm.normalize(self.replay.sample(self.disc_batch_size))
+            mocap = self.normalize_disc_obs(self.env.fetch_disc_obs_demo(self.disc_batch_size))
+            agent = self.normalize_disc_obs(self.replay.sample(self.disc_batch_size))
             step = self.disc_loss(mocap, agent)
             self.disc_optimizer.zero_grad()
-            (step["disc_loss"] + step["disc_grad_penalty"]).backward()
+            (step["disc_loss"] + step["disc_grad_penalty"] + step["disc_logit_penalty"]).backward()
             self.disc_optimizer.step()
             for k, v in step.items():
                 sums[k] = sums.get(k, 0.0) + v.detach()
         self.disc.eval()
+        if self.update_disc_norm():                                         # after D's update, as MimicKit
+            self.disc_norm.update()
         return {k: v / self.disc_steps for k, v in sums.items()}
 
     def disc_loss(self, norm_mocap, norm_agent):
@@ -157,6 +207,7 @@ class AMPTrainer(Trainer):
         d_mocap, d_agent = self.disc(norm_mocap), self.disc(norm_agent)
         return {"disc_loss": disc_loss_lsgan(d_mocap, d_agent),
                 "disc_grad_penalty": gradient_penalty(self.disc, norm_mocap, self.w_gp),
+                "disc_logit_penalty": self.logit_reg * torch.sum(self.disc.out.weight ** 2),
                 "disc_acc_mocap": (d_mocap > 0).float().mean(),             # mocap judged mocap
                 "disc_acc_agent": (d_agent < 0).float().mean(),             # agent judged agent
                 "disc_mocap_mean": d_mocap.mean(), "disc_agent_mean": d_agent.mean()}
@@ -170,4 +221,5 @@ class AMPTrainer(Trainer):
         if "disc" in state:
             self.disc.load_state_dict(state["disc"])
             self.disc_norm.load_state_dict(state["disc_norm"])
+            self.set_disc_mask()
         return state

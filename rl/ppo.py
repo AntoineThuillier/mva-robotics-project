@@ -28,12 +28,14 @@ from rl.returns import end_values, td_lambda_returns
 
 
 def build_optimizer(config, params):
-    """MimicKit's optimizers: SGD (momentum 0.9) or AdamW."""
+    """MimicKit's optimizers: SGD (momentum 0.9) or AdamW, with an optional weight_decay
+    (default 0; MimicKit's AMP uses 1e-4 on D, the article none)."""
     lr = float(config["learning_rate"])
+    wd = float(config.get("weight_decay", 0.0))
     if config["type"] == "SGD":
-        return torch.optim.SGD(params, lr, momentum=0.9)
+        return torch.optim.SGD(params, lr, momentum=0.9, weight_decay=wd)
     if config["type"] == "Adam":
-        return torch.optim.AdamW(params, lr)
+        return torch.optim.AdamW(params, lr, weight_decay=wd)
     raise ValueError(f"unsupported optimizer {config['type']}")
 
 

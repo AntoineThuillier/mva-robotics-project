@@ -19,8 +19,10 @@ state init from the mocap) and only changes what differs from the article:
                   mass (Newton): v_com = v_origin + w x (R r_com). MimicKit writes it unconverted.
                   Joint velocities are NOT converted: Newton's MuJoCo solver integrates
                   spherical joint velocities in the child frame, like the mocap
-                  (validation/phase2.py, test 2b; same convention as amp/expert.py)
-    episode       20 s (configs/amp_heading_humanoid_env.yaml)
+                  (validation/check_heading_env.py, test 2b; same convention as amp/expert.py)
+    episode       20 s (configs/run1/locomotion_env.yaml)
+    mocap height  optional (align_mocap_feet, off by default): each clip shifted vertically so that
+                  its stance feet are at the simulated contact level (amp/foot_align.py)
     disc obs      phase 4: info["disc_obs"] = our phi_paire(s, s') (amp/disc_features.py), demos
                   from amp/expert.py, instead of MimicKit's features (10 states in its config)
 
@@ -45,9 +47,10 @@ import util.torch_util as torch_util
 
 from amp.disc_features import AMPFeatures, EtatPerso
 from amp.expert import ExpertTransitions, root_com_from_engine
+from amp.foot_align import align_clips
 
 PROJECT = Path(__file__).resolve().parents[1]
-DEFAULT_ENV_FILE = "configs/amp_heading_humanoid_env.yaml"     # relative to the project root
+DEFAULT_ENV_FILE = "configs/run1/locomotion_env.yaml"     # relative to the project root
 DEFAULT_ENGINE_FILE = "data/engines/newton_engine.yaml"         # relative to MimicKit's root
 
 
@@ -70,6 +73,10 @@ class TaskHeadingEnv(task_steering_env.TaskSteeringEnv):
         self._speed_change_prob = float(env_config["speed_change_prob"])
         self._reward_vel_scale = float(env_config["reward_vel_scale"])
         self.convert_init_vel = env_config.get("convert_init_vel", True)   # False only for tests
+        # mocap clips shifted vertically to the simulated contact level (amp/foot_align.py), off by default
+        self._align_mocap_feet = bool(env_config.get("align_mocap_feet", False))
+        self._foot_contact_height = float(env_config.get("foot_contact_height", 0.0))
+        self.clip_height_offsets = None        # (num_motions,) m, set when align_mocap_feet
 
         # keys TaskSteeringEnv reads but that we do not use
         env_config = dict(env_config)
@@ -81,6 +88,16 @@ class TaskHeadingEnv(task_steering_env.TaskSteeringEnv):
         super().__init__(env_config=env_config, engine_config=engine_config, num_envs=num_envs,
                          device=device, visualize=visualize, record_video=record_video)
         sort_contact_sensor_pairs(self._engine._ground_contact_sensor)
+        return
+
+    # ---------- mocap: vertical alignment of the clips (amp/foot_align.py) ----------
+    def _load_motions(self, motion_file):
+        super()._load_motions(motion_file)
+        if self._align_mocap_feet:
+            self.clip_height_offsets = align_clips(self._motion_lib, self._kin_char_model, self._foot_contact_height)
+            o = self.clip_height_offsets * 100
+            print(f"align_mocap_feet: {len(o)} clips shifted to a stance level of {100 * self._foot_contact_height:+.1f} cm, "
+                  f"offsets {o.min():+.1f} to {o.max():+.1f} cm (median {o.median():+.1f})")
         return
 
     # ---------- buffers ----------
@@ -267,7 +284,7 @@ def sort_contact_sensor_pairs(sensor):
     sensor._sp_ep_count = wp.array(new_count, dtype=wp.int32, device=sensor.device)
 
 
-# ===================== pure functions (tested in validation/phase2.py) =====================
+# ===================== pure functions (tested in validation/check_heading_env.py) =====================
 
 def root_origin_vel_to_com_vel(root_com, root_rot, root_vel, root_ang_vel):
     """Velocity of the root origin (mocap) -> velocity of the root center of mass (Newton):
