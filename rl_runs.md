@@ -116,8 +116,13 @@ de Run.
 Sur **Walk, même plafond qu'en série 5** : la tâche décolle tôt (59 M), mais le retour de test reste
 vers 250–300 sur 600 jusqu'à la fin (258). Le style domine encore plus : r_S 0,59 et D sur l'agent
 −0,32, pour r_G 0,35. Les deux Walk avec pieds alignés plafonnent, avec ou sans masque : l'alignement
-des pieds en est la cause probable. Locomotion : à venir.
+des pieds en est la cause probable.
+
+Locomotion est au niveau des séries 3 et 5 pour la tâche (retour de test final 517, contre 521–523), avec
+un style plus fort : r_S 0,48 (0,36) et D sur l'agent −0,46 (−0,66).
 
 **Validation.** `amp_run_6` : retour normalisé 0,86, aucune chute, toutes les vitesses atteintes à
 0,5 m/s près (0,85 à 4,72 m/s pour 1 à 5 m/s, un peu sous la cible). `amp_walk_6` : retour normalisé
-0,45, aucune chute, 1,0 à 1,1 m/s pour toutes les cibles de 1 à 5 m/s.
+0,45, aucune chute, 1,0 à 1,1 m/s pour toutes les cibles de 1 à 5 m/s. `amp_locomotion_6` : retour
+normalisé 0,86, aucune chute, le test de vitesse échoue seulement à 2 m/s (1,46 m/s), le même creux
+qu'`amp_run_5`.
