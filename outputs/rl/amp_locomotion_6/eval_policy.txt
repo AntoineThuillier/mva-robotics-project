@@ -1,0 +1,140 @@
+C:\Users\antoi\Desktop\MVA\Robotics\mva-robotics-project\.venv\Lib\site-packages\torch\jit\_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+
+=== Test 1: learning curve, 47 outputs, 300.0 M samples ===
+  test return: 3.7 -> 516.7 (max 600)
+  test episode length: 0.56 s -> 19.87 s  (must end > 15 s)
+  figure: C:\Users\antoi\Desktop\MVA\Robotics\mva-robotics-project\outputs\rl\amp_locomotion_6\learning_curve.png
+  => OK
+Warp 1.12.1 initialized:
+   CUDA Toolkit 12.9, Driver 13.2
+   Devices:
+     "cpu"      : "AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD"
+     "cuda:0"   : "NVIDIA GeForce RTX 3070" (8 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     C:\Users\antoi\Desktop\MVA\Robotics\mva-robotics-project\reference\warpcache
+Building 1/64 envsBuilding 2/64 envsBuilding 3/64 envsBuilding 4/64 envsBuilding 5/64 envsBuilding 6/64 envsBuilding 7/64 envsBuilding 8/64 envsBuilding 9/64 envsBuilding 10/64 envsBuilding 11/64 envsBuilding 12/64 envsBuilding 13/64 envsBuilding 14/64 envsBuilding 15/64 envsBuilding 16/64 envsBuilding 17/64 envsBuilding 18/64 envsBuilding 19/64 envsBuilding 20/64 envsBuilding 21/64 envsBuilding 22/64 envsBuilding 23/64 envsBuilding 24/64 envsBuilding 25/64 envsBuilding 26/64 envsBuilding 27/64 envsBuilding 28/64 envsBuilding 29/64 envsBuilding 30/64 envsBuilding 31/64 envsBuilding 32/64 envsBuilding 33/64 envsBuilding 34/64 envsBuilding 35/64 envsBuilding 36/64 envsBuilding 37/64 envsBuilding 38/64 envsBuilding 39/64 envsBuilding 40/64 envsBuilding 41/64 envsBuilding 42/64 envsBuilding 43/64 envsBuilding 44/64 envsBuilding 45/64 envsBuilding 46/64 envsBuilding 47/64 envsBuilding 48/64 envsBuilding 49/64 envsBuilding 50/64 envsBuilding 51/64 envsBuilding 52/64 envsBuilding 53/64 envsBuilding 54/64 envsBuilding 55/64 envsBuilding 56/64 envsBuilding 57/64 envsBuilding 58/64 envsBuilding 59/64 envsBuilding 60/64 envsBuilding 61/64 envsBuilding 62/64 envsBuilding 63/64 envsBuilding 64/64 envs
+
+Loading 1/56 motion files: data/motions/humanoid/humanoid_run.pkl
+Loading 2/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward00.pkl
+Loading 3/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward01.pkl
+Loading 4/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward02.pkl
+Loading 5/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward03.pkl
+Loading 6/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward04.pkl
+Loading 7/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward05.pkl
+Loading 8/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward06.pkl
+Loading 9/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward07.pkl
+Loading 10/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward08.pkl
+Loading 11/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward09.pkl
+Loading 12/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward10.pkl
+Loading 13/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward11.pkl
+Loading 14/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward12.pkl
+Loading 15/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward13.pkl
+Loading 16/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward14.pkl
+Loading 17/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_forward15.pkl
+Loading 18/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left00.pkl
+Loading 19/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left01.pkl
+Loading 20/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left02.pkl
+Loading 21/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left03.pkl
+Loading 22/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left04.pkl
+Loading 23/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left05.pkl
+Loading 24/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left06.pkl
+Loading 25/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left07.pkl
+Loading 26/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left08.pkl
+Loading 27/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left09.pkl
+Loading 28/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left10.pkl
+Loading 29/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left11.pkl
+Loading 30/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left12.pkl
+Loading 31/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left13.pkl
+Loading 32/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_left14.pkl
+Loading 33/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right00.pkl
+Loading 34/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right01.pkl
+Loading 35/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right02.pkl
+Loading 36/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right03.pkl
+Loading 37/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right04.pkl
+Loading 38/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right05.pkl
+Loading 39/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right06.pkl
+Loading 40/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right07.pkl
+Loading 41/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right08.pkl
+Loading 42/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right09.pkl
+Loading 43/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right10.pkl
+Loading 44/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right11.pkl
+Loading 45/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right12.pkl
+Loading 46/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right13.pkl
+Loading 47/56 motion files: data/motions/humanoid/sie/humanoid_sie_run_right14.pkl
+Loading 48/56 motion files: data/motions/humanoid/humanoid_walk.pkl
+Loading 49/56 motion files: data/motions/humanoid/long/humanoid_long_walk0.pkl
+Loading 50/56 motion files: data/motions/humanoid/long/humanoid_long_walk1.pkl
+Loading 51/56 motion files: data/motions/humanoid/long/humanoid_long_walk2.pkl
+Loading 52/56 motion files: data/motions/humanoid/long/humanoid_long_walk3.pkl
+Loading 53/56 motion files: data/motions/humanoid/long/humanoid_long_walk0_mirror.pkl
+Loading 54/56 motion files: data/motions/humanoid/long/humanoid_long_walk1_mirror.pkl
+Loading 55/56 motion files: data/motions/humanoid/long/humanoid_long_walk2_mirror.pkl
+Loading 56/56 motion files: data/motions/humanoid/long/humanoid_long_walk3_mirror.pkl
+Loaded motion file: data/datasets/dataset_humanoid_locomotion.yaml
+Loaded 56 motions with a total length of 433.817s.
+align_mocap_feet: 56 clips shifted to a stance level of -1.3 cm, offsets -0.9 to +3.0 cm (median +2.2)
+Building 1/64 objsBuilding 2/64 objsBuilding 3/64 objsBuilding 4/64 objsBuilding 5/64 objsBuilding 6/64 objsBuilding 7/64 objsBuilding 8/64 objsBuilding 9/64 objsBuilding 10/64 objsBuilding 11/64 objsBuilding 12/64 objsBuilding 13/64 objsBuilding 14/64 objsBuilding 15/64 objsBuilding 16/64 objsBuilding 17/64 objsBuilding 18/64 objsBuilding 19/64 objsBuilding 20/64 objsBuilding 21/64 objsBuilding 22/64 objsBuilding 23/64 objsBuilding 24/64 objsBuilding 25/64 objsBuilding 26/64 objsBuilding 27/64 objsBuilding 28/64 objsBuilding 29/64 objsBuilding 30/64 objsBuilding 31/64 objsBuilding 32/64 objsBuilding 33/64 objsBuilding 34/64 objsBuilding 35/64 objsBuilding 36/64 objsBuilding 37/64 objsBuilding 38/64 objsBuilding 39/64 objsBuilding 40/64 objsBuilding 41/64 objsBuilding 42/64 objsBuilding 43/64 objsBuilding 44/64 objsBuilding 45/64 objsBuilding 46/64 objsBuilding 47/64 objsBuilding 48/64 objsBuilding 49/64 objsBuilding 50/64 objsBuilding 51/64 objsBuilding 52/64 objsBuilding 53/64 objsBuilding 54/64 objsBuilding 55/64 objsBuilding 56/64 objsBuilding 57/64 objsBuilding 58/64 objsBuilding 59/64 objsBuilding 60/64 objsBuilding 61/64 objsBuilding 62/64 objsBuilding 63/64 objsBuilding 64/64 objs
+Initializing simulation...
+Module validate_and_correct_inertia_kernel_24b63428 24b6342 load on device 'cuda:0' took 31.44 ms  (cached)
+Module newton._src.sim.articulation 756343c load on device 'cuda:0' took 37.75 ms  (cached)
+Module newton._src.sim.graph_coloring a44bf79 load on device 'cpu' took 8.64 ms  (cached)
+Module newton._src.solvers.mujoco.kernels 93c4397 load on device 'cuda:0' took 45.42 ms  (cached)
+Module repeat_array_kernel_a65abfa6 f59532f load on device 'cuda:0' took 29.72 ms  (cached)
+Module repeat_array_kernel_a65abfa6 d0f6264 load on device 'cuda:0' took 31.93 ms  (cached)
+Module repeat_array_kernel_a65abfa6 a248d7d load on device 'cuda:0' took 25.39 ms  (cached)
+Module repeat_array_kernel_a65abfa6 cddcb35 load on device 'cuda:0' took 30.24 ms  (cached)
+Module repeat_array_kernel_a65abfa6 dfa4b14 load on device 'cuda:0' took 31.50 ms  (cached)
+Module repeat_array_kernel_a65abfa6 4f88518 load on device 'cuda:0' took 32.13 ms  (cached)
+Module repeat_array_kernel_a65abfa6 aef7f0f load on device 'cuda:0' took 33.58 ms  (cached)
+Module mujoco_warp._src.io a7593be load on device 'cuda:0' took 30.15 ms  (cached)
+Module mujoco_warp._src.smooth 493b239 load on device 'cuda:0' took 52.29 ms  (cached)
+Module engines.newton_engine dcf662a load on device 'cuda:0' took 30.25 ms  (cached)
+Module mujoco_warp._src.collision_driver 4d8b905 load on device 'cuda:0' took 29.77 ms  (cached)
+Module _nxn_broadphase__locals__kernel_d35c97fa d35c97f load on device 'cuda:0' took 29.03 ms  (cached)
+Module ccd_kernel_builder__locals__ccd_kernel_61612c6d 61612c6 load on device 'cuda:0' took 42.40 ms  (cached)
+Module _primitive_narrowphase__locals__primitive_narrowphase_610ce499 610ce49 load on device 'cuda:0' took 33.98 ms  (cached)
+Module mujoco_warp._src.constraint bbe4f30 load on device 'cuda:0' took 48.05 ms  (cached)
+Module _actuator_velocity__locals__actuator_velocity_e723b2cf 31b777e load on device 'cuda:0' took 23.76 ms  (cached)
+Module mujoco_warp._src.passive 7fb8524 load on device 'cuda:0' took 33.61 ms  (cached)
+Module mujoco_warp._src.forward 291f859 load on device 'cuda:0' took 30.53 ms  (cached)
+Module mujoco_warp._src.support 343d1ae load on device 'cuda:0' took 28.24 ms  (cached)
+Module mujoco_warp._src.solver c8aea8f load on device 'cuda:0' took 32.53 ms  (cached)
+Module solve_init_jaref__locals__kernel_c3ef396b c3ef396 load on device 'cuda:0' took 23.65 ms  (cached)
+Module mul_m_sparse__locals___mul_m_sparse_3795f265 3795f26 load on device 'cuda:0' took 28.07 ms  (cached)
+Module update_constraint_efc__locals__kernel_bd6c6bff bd6c6bf load on device 'cuda:0' took 25.14 ms  (cached)
+Module update_constraint_gauss_cost__locals__kernel_0a3a92e8 0a3a92e load on device 'cuda:0' took 25.29 ms  (cached)
+Module update_gradient_JTDAJ_sparse_tiled__locals__kernel_27ccc447 78cb8c9 load on device 'cuda:0' took 130.72 ms  (cached)
+Module update_gradient_cholesky_blocked__locals__kernel_bb004999 fbd28cb load on device 'cuda:0' took 503.54 ms  (cached)
+Module linesearch_jv_fused__locals__kernel_b6213edc b6213ed load on device 'cuda:0' took 30.50 ms  (cached)
+Module linesearch_iterative__locals__kernel_6507db42 4db0ef8 load on device 'cuda:0' took 26.46 ms  (cached)
+Module update_constraint_efc__locals__kernel_cdc96abb cdc96ab load on device 'cuda:0' took 31.33 ms  (cached)
+Module mujoco_warp._src.derivative f391b97 load on device 'cuda:0' took 25.28 ms  (cached)
+Char 0 properties
+	DoFs: 28
+	Mass: 50.050 kg
+
+Module newton._src.sensors.sensor_contact d7cd052 load on device 'cuda:0' took 104.85 ms  (cached)
+
+=== Test 2: normalized task return, 32 episodes of 20 s ===
+  mean 0.859, std 0.068, min 0.719, max 0.971
+  to compare by hand with Fig. 5 (No Data); article Table 1 with AMP: Locomotion 0.90
+  => OK (sanity threshold 0.5)
+
+=== Test 4: falls ===
+  0/32 episodes end with a fall (mean episode length 20.0 s)
+  => OK (must be < 10 %)
+
+=== Test 3: speed along the target direction vs v* (goal frozen, 12 episodes per v*) ===
+  v* = 1 m/s: reached 0.67 m/s  => OK
+  v* = 2 m/s: reached 1.46 m/s  => FAIL
+  v* = 3 m/s: reached 2.97 m/s  => OK
+  v* = 4 m/s: reached 3.91 m/s  => OK
+  v* = 5 m/s: reached 4.60 m/s  => OK
+  => FAIL (within 0.5 m/s)
+
+=== Summary ===
+  test 1   learning curve                                OK
+  test 2   normalized task return                        OK
+  test 3   speed vs target speed                         FAIL
+  test 4   falls < 10 %                                  OK
