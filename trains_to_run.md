@@ -2,54 +2,49 @@
 
 Objectif : les trois tâches AMP (Walk, Run, Locomotion) pour les six séries de `configs/` (voir
 `configs/README.md`), chacune avec son évaluation (`eval_policy.txt`) et ses vidéos (`videos/`).
-Un run complet fait 300 M échantillons, soit environ 4 à 4,5 h, plus 10 min d'évaluation.
+Un run complet fait 300 M échantillons, soit environ 3h55 à 22 000 échantillons/s, plus 10 min
+d'évaluation.
 
-## État au 24/11/2026
+## État au 25/11/2026, 09:30
 
 | Série | Walk | Run | Locomotion |
 |---|---|---|---|
-| 1 : référence, `disc_steps` 32 | fait, vidéos | fait, vidéos | fait, vidéos |
-| 2 : `disc_steps` 8 | **arrêté à 79 M, à relancer** | fait, *éval. manquante* | **à faire** |
-| 3 : régularisation de D | fait, *éval. manquante* | fait, *éval. manquante* | fait, *éval. manquante* |
+| 1 : référence, `disc_steps` 32 | fait, évalué | fait, évalué | fait, évalué |
+| 2 : `disc_steps` 8 | **arrêté à 79 M, à relancer** | fait, évalué | **à faire** |
+| 3 : régularisation de D | fait, évalué | fait, évalué | fait, évalué |
 | 4 : pas de politique 4e-6, pieds alignés | **à faire** | **arrêté à 85 M, à relancer** | **à faire** |
-| 5 : entrées constantes masquées | **à faire** | en cours (lancé par l'ancien `runs_rl.sh`) | **à faire** |
-| 6 : normaliseur agent + mocap | **à faire** | **à faire** | **à faire** |
+| 5 : entrées constantes masquées | fait, évalué | fait, évalué | en cours |
+| 6 : normaliseur agent + mocap | **à faire** | fait, évalué | **à faire** |
 
-PPO seul (`ppo_heading`, série 1) : fait, vidéos.
+PPO seul (`ppo_heading`, série 1) : fait, évalué.
 
-## File de `runs.sh`, dans l'ordre
+## File de `runs.sh`, en cours
 
-`bash runs.sh` fait tout ce qui suit. On peut l'arrêter entre deux runs et retirer les lignes déjà
-faites dans la section `queue` du script avant de le relancer.
+`runs.sh` tourne depuis le 24/11 à 22:44. Les évaluations de la file, `amp_run_6` et `amp_walk_5`
+sont faites. Il reste, dans l'ordre, avec les heures de fin estimées (évaluation comprise, ±1 h
+sur les derniers) :
 
-1. Évaluation et vidéos des runs finis qui n'en ont pas : `amp_run_2`, `amp_run_3`, `amp_walk_3`,
-   `amp_locomotion_3`, `amp_run_5`. Compter environ 50 min.
-2. Les deux corrections du cou de Run, dans l'ordre :
-   1. `amp_run_6`, prioritaire : c'est le test de la seconde correction ;
-   2. `amp_walk_5` ;
-   3. `amp_locomotion_5` ;
-   4. `amp_walk_6` ;
-   5. `amp_locomotion_6`.
-3. Compléter les séries 2 et 4 : `amp_walk_2`, `amp_locomotion_2`, `amp_run_4`, `amp_walk_4`,
-   `amp_locomotion_4`. Pour `amp_walk_2` et `amp_run_4`, le dossier du run arrêté est écrasé. Copie-le
-   ailleurs avant si tu veux garder les courbes partielles.
+| Run | Fin estimée | Rôle |
+|---|---|---|
+| `amp_locomotion_5` | 25/11 ~12:15 | série 5 |
+| `amp_walk_6` | 25/11 ~16:20 | série 6. Dira si le plafond de `amp_walk_5` vient des pieds alignés |
+| `amp_locomotion_6` | 25/11 ~20:25 | série 6 |
+| `amp_walk_2` | 26/11 ~00:30 | compléter la série 2 (écrase le run arrêté) |
+| `amp_locomotion_2` | 26/11 ~04:35 | série 2 |
+| `amp_run_4` | 26/11 ~08:40 | compléter la série 4 (écrase le run arrêté) |
+| `amp_walk_4` | 26/11 ~12:45 | série 4 |
+| `amp_locomotion_4` | 26/11 ~16:50 | série 4 |
 
-Total pour les points 2 et 3 : 10 runs, soit environ 45 h.
+Le 25/11, entre 08:20 et 09:20, `amp_locomotion_5` a perdu environ 1 h, sans qu'un autre programme
+occupe le GPU (mise en veille ou bridage probable). Laisser l'ordinateur sur secteur, sans veille.
 
-## Après `amp_run_5`
-
-L'ancien script continue avec son ancienne liste. Il échouera tout seul sur `amp_walk_5`, parce que
-ses chemins de config n'existent plus, et s'arrêtera. Le `outputs/rl/amp_walk_5.out` d'erreur sera
-écrasé plus tard. Ensuite :
-
-```bash
-bash runs.sh                     # la file ci-dessus, évaluation de amp_run_5 comprise
-```
+Pour arrêter la file : Ctrl+C entre deux runs, puis retirer les lignes déjà faites de la section
+`queue` de `runs.sh` avant de le relancer. Pour évaluer un run à la main : `bash runs.sh eval <run>`.
 
 ## Suivi
 
-- Console d'un run : `tail -f outputs/rl/<run>.out`.
-- Courbes de toutes les séries : `results.ipynb`, section « Séries 2 à 6 ». Le notebook ne fait que lire
-  les logs, on peut le relancer pendant un run.
-- Ce qu'on attend sur Run : en séries 5 et 6, r_S ne doit pas s'effondrer vers 0,05 entre 13 et 90 M
-  échantillons. En séries 1 à 4, il était à 0,09–0,21 à 50 M.
+- Console du run en cours : `Get-Content outputs/rl/<run>.out -Wait -Tail 20` (PowerShell) ou
+  `tail -f outputs/rl/<run>.out` (bash).
+- Courbes de toutes les séries : `results.ipynb`, section « Séries 2 à 6 ». Le notebook ne fait que
+  lire les logs, on peut le relancer pendant un run.
+- Résultats et validation de chaque série : `rl_runs.md`.
