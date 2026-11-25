@@ -81,12 +81,24 @@ l'agent aussi. D doit juger le style sur le reste du corps, qui est imitable.
 le run (0,04 à 0,07 en séries 1 à 3), et D sur l'agent reste vers −0,55 au lieu de −1. D reconnaît
 encore l'agent à 99 %, sans saturer : r_S garde sa dispersion et guide le style. Une différence réelle
 subsiste, l'abdomen de l'agent tourne plus que celui de la mocap (−25° à +40° contre ±11°).
-Walk et Locomotion : à venir.
+
+Sur **Walk, la tâche plafonne** : elle décolle à 118 M (85 à 92 M avant) et le retour de test stagne
+vers 250–280 sur 600 (490 en séries 1 et 3). D et r_S sont normaux (r_S ≈ 0,35, D sur l'agent ≈ −0,7).
+La politique reste dans un optimum local : elle marche à ~1,3 m/s, l'allure des clips Walk, quelle que
+soit la vitesse demandée. `amp_walk_6` (pieds alignés, sans masque) plafonne de la même façon : le
+masque n'est pas en cause, l'alignement des pieds est le suspect principal (une seule graine par
+configuration, donc pas encore une preuve).
+
+Locomotion est identique à la série 3 : décollage à 79 M, retour de test final 521 (523), r_S 0,36, D
+sur l'agent −0,66. Les clips Run de Locomotion donnent sans doute à l'agent un style pour aller vite.
 
 **Validation.** `amp_run_5` : retour normalisé 0,83 (0,90 en séries 2 et 3), aucune chute. Le test de
 vitesse échoue à 2 m/s (1,50 m/s atteint), et toutes les vitesses sont un peu sous la cible. C'est le
 compromis attendu d'AMP : le style est actif et retient la politique près de la mocap, au prix d'un
 peu de tâche. Le creux à 2 m/s tomberait entre marche et course (hypothèse). À confirmer sur les vidéos.
+`amp_walk_5` : retour normalisé 0,48, aucune chute, vitesse de 1,1 à 1,3 m/s pour toutes les cibles.
+`amp_locomotion_5` : retour normalisé 0,87 (0,88 en série 3), aucune chute, toutes les vitesses
+atteintes à 0,5 m/s près.
 
 ## Série 6 : normaliseur de D sur agent + mocap
 
@@ -96,7 +108,16 @@ MimicKit, puis figés après 1e8 échantillons. C'est l'autre correction du cou 
 celui des mouvements de l'agent (environ 1°), donc un cou à 1° donne une entrée d'environ 1 au lieu de
 10. L'indice reste visible pour D, mais faible.
 
-**Résultats et limites.** À venir. Avec la série 5, elle dira s'il faut retirer l'indice (masque) ou
-s'il suffit de le ramener à une échelle normale (normalisation de MimicKit).
+**Résultats et limites.** Sur Run, **r_S ne s'effondre pas non plus** : il reste entre 0,36 et 0,48
+(0,41 en fin de run), et D sur l'agent reste vers −0,5, comme en série 5. Ramener l'indice du cou à une
+échelle normale suffit donc, sans le retirer : la normalisation de MimicKit corrige seule le problème
+de Run.
 
-**Validation.** À venir.
+Sur **Walk, même plafond qu'en série 5** : la tâche décolle tôt (59 M), mais le retour de test reste
+vers 250–300 sur 600 jusqu'à la fin (258). Le style domine encore plus : r_S 0,59 et D sur l'agent
+−0,32, pour r_G 0,35. Les deux Walk avec pieds alignés plafonnent, avec ou sans masque : l'alignement
+des pieds en est la cause probable. Locomotion : à venir.
+
+**Validation.** `amp_run_6` : retour normalisé 0,86, aucune chute, toutes les vitesses atteintes à
+0,5 m/s près (0,85 à 4,72 m/s pour 1 à 5 m/s, un peu sous la cible). `amp_walk_6` : retour normalisé
+0,45, aucune chute, 1,0 à 1,1 m/s pour toutes les cibles de 1 à 5 m/s.
