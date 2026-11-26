@@ -42,11 +42,7 @@ if [ "$1" = eval ]; then
 fi
 
 # ======== queue ========
-# the two fixes of the Run neck (series 5 and 6)
-amp locomotion 6
-
-# to complete series 2 and 4 (amp_walk_2 and amp_run_4 were stopped: their folders are overwritten)
-amp walk 2
+# to complete series 2 and 4 (amp_run_4 was stopped: its folder is overwritten)
 amp locomotion 2
 amp run 4
 amp walk 4

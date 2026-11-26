@@ -1,5 +1,5 @@
 # AMP agent, option 1 of the D diagnosis: D trained less (disc_steps 8 instead of 32).
-# Same as configs/amp_heading_humanoid_agent.yaml otherwise. Each agent pair of the replay buffer
+# Same as configs/run1/amp_agent.yaml otherwise. Each agent pair of the replay buffer
 # is now seen ~8 times by D instead of ~30 (see the run amp_run_2).
 
 agent_name: "AMP_heading"

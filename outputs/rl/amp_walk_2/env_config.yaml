@@ -1,5 +1,6 @@
+# Copy of configs/run1/walk_env.yaml: series 2 uses the same environment as series 1.
 # Target Heading environment (amp/heading_env.py), Walk (9 clips) dataset only (phase 4).
-# Same as configs/amp_heading_humanoid_env.yaml (Locomotion = Walk + Run) except motion_file.
+# Same as configs/run1/locomotion_env.yaml (Locomotion = Walk + Run) except motion_file.
 # Based on MimicKit's data/envs/amp_steering_humanoid_env.yaml; differences are marked [CHANGED].
 
 env_name: "task_heading"                          # [CHANGED] built by amp.heading_env.build_heading_env
