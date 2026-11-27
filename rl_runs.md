@@ -29,13 +29,21 @@ clips Walk ne dépassent pas 1,5 m/s environ, et le style freine la politique au
 8 fois par D au lieu de 30, pour que D ne surapprenne pas les transitions récentes de l'agent.
 
 **Résultats et limites.** L'effondrement sur Run est seulement retardé : r_S vaut 0,20 à 50 M contre
-0,09, mais 0,07 en fin de run, et D finit à −0,97. La tâche reste apprise (0,87). Walk a été arrêté à
-79 M (r_S comparable à la série 1) et Locomotion n'a pas été lancé. D trouve donc toujours un critère
-fiable : on essaie de le régulariser.
+0,09, mais 0,07 en fin de run, et D finit à −0,97. La tâche reste apprise (0,87). D trouve donc toujours
+un critère fiable : on essaie de le régulariser.
+
+Walk et Locomotion ont été faits après les séries 5 et 6. **Walk plafonne** comme en séries 5 et 6 :
+retour de test final 284 sur 600 (490 en séries 1 et 3), marche à ~1,3 m/s quelle que soit la cible.
+Il n'a pas les pieds alignés : l'alignement n'est donc pas la cause du plafond. Les trois Walk qui
+plafonnent (séries 2, 5, 6) ont `disc_steps` 8 sans régularisation de D, les deux qui n'en ont pas
+(séries 1 et 3) ont `disc_steps` 32 ou la régularisation. Mais cette régularisation est numériquement
+négligeable (série 3) et tous les runs ont la même graine : le hasard reste possible. Locomotion est
+normal (retour de test final 513, r_S 0,34).
 
 **Validation.** `amp_run_2` : retour normalisé 0,90, aucune chute, vitesses cibles de 1 à 5 m/s
 atteintes à 0,4 m/s près. Ce suivi presque parfait vient de r_S éteint : la politique n'optimise que la
-tâche.
+tâche. `amp_walk_2` : 0,50, aucune chute, 1,2 à 1,4 m/s pour toutes les cibles. `amp_locomotion_2` :
+0,85, aucune chute, échoue à 1 et 2 m/s (0,44 et 1,43 m/s), atteint 3 à 5 m/s.
 
 ## Série 3 : D régularisé comme dans MimicKit
 
@@ -68,7 +76,13 @@ entrées de Φ ont un écart-type au plancher (1e-4). Le moindre mouvement du co
 alors ±10 en entrée de D : un indice parfait, que l'agent ne peut pas effacer. Walk et Locomotion ont
 des clips au cou mobile, d'où l'absence du problème.
 
-**Validation.** Aucune : les runs sont arrêtés ou pas encore faits.
+Les trois tâches ont ensuite été relancées jusqu'à 300 M : **aucune n'apprend la tâche**. Les épisodes
+de test passent de ~30 à ~70 pas sur 600 : le personnage commence à peine à tenir debout. Le pas de
+l'article est trop lent pour notre budget de 300 M (la série 2 décolle vers 75–100 M avec 5e-5). Sur
+Run, r_S s'effondre en plus (0,07, D −0,97), le cou n'étant pas corrigé.
+
+**Validation.** Retour normalisé 0,02 (Run), 0,02 (Walk), 0,03 (Locomotion) : 32 chutes sur 32, en
+1,5 à 2,2 s.
 
 ## Série 5 : entrées constantes masquées
 
@@ -85,9 +99,8 @@ subsiste, l'abdomen de l'agent tourne plus que celui de la mocap (−25° à +40
 Sur **Walk, la tâche plafonne** : elle décolle à 118 M (85 à 92 M avant) et le retour de test stagne
 vers 250–280 sur 600 (490 en séries 1 et 3). D et r_S sont normaux (r_S ≈ 0,35, D sur l'agent ≈ −0,7).
 La politique reste dans un optimum local : elle marche à ~1,3 m/s, l'allure des clips Walk, quelle que
-soit la vitesse demandée. `amp_walk_6` (pieds alignés, sans masque) plafonne de la même façon : le
-masque n'est pas en cause, l'alignement des pieds est le suspect principal (une seule graine par
-configuration, donc pas encore une preuve).
+soit la vitesse demandée. `amp_walk_6` (sans masque) et `amp_walk_2` (sans masque ni pieds alignés)
+plafonnent de la même façon : ni le masque ni l'alignement ne sont en cause (voir la série 2).
 
 Locomotion est identique à la série 3 : décollage à 79 M, retour de test final 521 (523), r_S 0,36, D
 sur l'agent −0,66. Les clips Run de Locomotion donnent sans doute à l'agent un style pour aller vite.
@@ -115,8 +128,7 @@ de Run.
 
 Sur **Walk, même plafond qu'en série 5** : la tâche décolle tôt (59 M), mais le retour de test reste
 vers 250–300 sur 600 jusqu'à la fin (258). Le style domine encore plus : r_S 0,59 et D sur l'agent
-−0,32, pour r_G 0,35. Les deux Walk avec pieds alignés plafonnent, avec ou sans masque : l'alignement
-des pieds en est la cause probable.
+−0,32, pour r_G 0,35. Le plafond n'est pas dû à la série 6 : `amp_walk_2` plafonne aussi (série 2).
 
 Locomotion est au niveau des séries 3 et 5 pour la tâche (retour de test final 517, contre 521–523), avec
 un style plus fort : r_S 0,48 (0,36) et D sur l'agent −0,46 (−0,66).

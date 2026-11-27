@@ -1,7 +1,7 @@
 # AMP agent, policy stepsize of the article (actor learning_rate 4e-6 instead of 5e-5): the policy
 # moves more slowly, so that D can follow it and the style reward stays informative.
-# Same as configs/amp_heading_humanoid_agent_disc8.yaml otherwise (disc_steps 8, no regularization
-# of D). Runs amp_run_4, amp_walk_4, amp_locomotion_4 (with the env configs *_feet_env.yaml).
+# Same as configs/run2/amp_agent.yaml otherwise (disc_steps 8, no regularization
+# of D). Runs amp_run_4, amp_walk_4, amp_locomotion_4 (env configs of this folder: feet aligned).
 
 agent_name: "AMP_heading"
 

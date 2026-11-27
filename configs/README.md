@@ -40,9 +40,9 @@ tableau est identique : PPO, réseaux, D en LSGAN avec pénalité de gradient 10
 | 1 | 32 | 5e-5 | non | non | normalisée sur la mocap seule | r_S s'effondre (≈ 0,05) |
 | 2 | **8** | 5e-5 | non | non | mocap seule | effondrement un peu retardé |
 | 3 | 8 | 5e-5 | **weight decay 1e-4 + pénalité 0,01** | non | mocap seule | comme la série 2 |
-| 4 | 8 | **4e-6** | non | **oui** | mocap seule | tâche beaucoup plus lente, même D (arrêté à 85 M) |
-| 5 | 8 | 5e-5 | non | oui | mocap seule, **entrées constantes masquées** | en cours |
-| 6 | 8 | 5e-5 | non | oui | **mocap + agent (MimicKit)** | à venir |
+| 4 | 8 | **4e-6** | non | **oui** | mocap seule | tâche non apprise en 300 M, r_S s'effondre |
+| 5 | 8 | 5e-5 | non | oui | mocap seule, **entrées constantes masquées** | r_S stable (0,40–0,54) |
+| 6 | 8 | 5e-5 | non | oui | **mocap + agent (MimicKit)** | r_S stable (0,36–0,48) |
 
 Ce que règle chaque paramètre :
 
