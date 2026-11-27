@@ -70,6 +70,14 @@ def heading_env(num_envs=64, env_file=None):
     return _get(("heading", num_envs, env_file), lambda: build_heading_env(num_envs, DEVICE, env_file=env_file))
 
 
+def location_env(num_envs=64, env_file=None):
+    """Target Location environment (amp/location_env.py). env_file: another env config (e.g. the
+    env_config.yaml of a run); default configs/location/locomotion_env.yaml."""
+    from amp.location_env import build_location_env
+    env_file = str(env_file) if env_file else None
+    return _get(("location", num_envs, env_file), lambda: build_location_env(num_envs, DEVICE, env_file=env_file))
+
+
 def heading_env_nopd(num_envs=16):
     """Same environment without PD control, one 1/240 s physics step per env step
     (configs/newton_test_nopd_240hz.yaml). Used by phase 2 test 2 to read the solver's

@@ -255,6 +255,19 @@ def resolve(path):
     return str(p if p.is_absolute() or not (PROJECT / p).exists() else PROJECT / p)
 
 
+def build_env(env_file, num_envs, device, engine_file):
+    """Our environments, chosen by env_name in the env config: task_heading (amp/heading_env.py)
+    or task_location (amp/location_env.py)."""
+    env_name = yaml.safe_load(open(env_file))["env_name"]
+    if env_name == "task_heading":
+        from amp.heading_env import build_heading_env
+        return build_heading_env(num_envs, device, env_file=env_file, engine_file=engine_file)
+    if env_name == "task_location":
+        from amp.location_env import build_location_env
+        return build_location_env(num_envs, device, env_file=env_file, engine_file=engine_file)
+    raise ValueError(f"unknown env_name {env_name} in {env_file}")
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--mode", choices=["train", "test"], default="train")
@@ -270,12 +283,11 @@ def main():
     p.add_argument("--device", default="cuda:0")
     args = p.parse_args()
 
-    from amp.heading_env import build_heading_env
     set_seed(args.seed)
     agent_config = resolve(args.agent_config)
     env_config = resolve(args.env_config)
     config = yaml.safe_load(open(agent_config))
-    env = build_heading_env(args.num_envs, args.device, env_file=env_config, engine_file=resolve(args.engine_config))
+    env = build_env(env_config, args.num_envs, args.device, resolve(args.engine_config))
     if "disc_optimizer" in config:                     # AMP config (configs/run1/amp_agent.yaml)
         from rl.amp import AMPTrainer
         trainer = AMPTrainer(env, config, args.device)
