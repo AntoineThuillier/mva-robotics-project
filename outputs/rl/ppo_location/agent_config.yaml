@@ -1,0 +1,48 @@
+# Target Location, PPO only (No Data baseline): copy of configs/run1/ppo_agent.yaml.
+# PPO agent for phase 3 (task reward only, no discriminator).
+# Same values as MimicKit's AMP agent (data/agents/amp_task_humanoid_agent.yaml) without the
+# discriminator part, so that phase 4 differs from phase 3 by the discriminator only.
+# Matches the article (section 6.2, Table 4) on: MLP 1024-512 ReLU for pi and V, fixed sigma,
+# discount 0.99, TD(lambda) 0.95, PPO clip 0.2 (Table 4 says 0.02, a typo: DeepMimic uses 0.2).
+# Differs on the batch sizes, sized for 4096 GPU envs instead of 16 CPU workers:
+# steps_per_iter x num_envs samples per iteration (32 x 4096 = 131k), minibatches of
+# batch_size x num_envs samples.
+
+agent_name: "PPO"
+
+model:
+  actor_net: "fc_2layers_1024units"      # layers 1024 and 512, ReLU
+  actor_init_output_scale: 0.01
+  actor_std_type: "FIXED"
+  action_std: 0.05
+
+  critic_net: "fc_2layers_1024units"
+
+actor_optimizer:
+    type: "SGD"
+    learning_rate: 5e-5
+
+critic_optimizer:
+    type: "SGD"
+    learning_rate: 1e-4
+
+discount: 0.99
+steps_per_iter: 32
+iters_per_output: 50         # test episodes, log line and model saved every 50 iterations (6.5 M samples
+                             # with 4096 envs): ~20 points on the learning curve for 140 M samples
+                             # (MimicKit's AMP agent: 200)
+test_episodes: 32
+normalizer_samples: 100000000
+use_mixed_precision: false
+
+actor_epochs: 5
+actor_batch_size: 4
+critic_epochs: 2
+critic_batch_size: 2
+
+td_lambda: 0.95
+ppo_clip_ratio: 0.2
+norm_adv_clip: 4.0
+action_bound_weight: 10.0
+action_entropy_weight: 0.0
+action_reg_weight: 0.0
