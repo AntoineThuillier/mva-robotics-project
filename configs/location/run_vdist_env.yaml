@@ -1,0 +1,56 @@
+# [vdist] Same as run_env.yaml, but v* grows with the distance to the target (amp/location_env.py):
+# with v* = 1 m/s the Run and Locomotion policies never really ran (configs/location/README.md).
+# Target Location environment (amp/location_env.py), Run (47 clips).
+# Character, reset, feet and discriminator settings as series 6 (configs/run6/*_env.yaml); goal and
+# reward of Target Location instead of Target Heading.
+
+env_name: "task_location"                         # built by amp.location_env.build_location_env
+
+char_file: "data/assets/humanoid/humanoid.xml"
+motion_file: "../../configs/datasets/dataset_humanoid_run.yaml"   # Run (47 clips); relative to MimicKit's root
+camera_mode: "track"
+
+episode_length: 20.0                              # [CHANGED] s, DeepMimic (MimicKit: 10)
+enable_early_termination: True                    # fall = contact with the ground other than the feet
+contact_bodies: ["right_foot", "left_foot"]
+pose_termination: False
+rand_reset: True                                  # RSI: random clip, random time
+
+# character observation (MimicKit, unchanged)
+global_obs: False
+root_height_obs: True
+enable_phase_obs: False
+enable_tar_obs: False
+key_bodies: ["head", "right_hand", "left_hand", "right_foot", "left_foot"]
+
+ref_char_offset: [2.0, 0.0, 0.0]                  # m, reference character drawn next to ours (viewer only)
+init_pose: [0, 0, 0.882416, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.5708, 0, 0, 0, -1.5708, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+# MimicKit's AMP env keeps a history of states for its own discriminator (unused by us)
+num_disc_obs_steps: 2                             # [CHANGED] article: (s, s') (MimicKit: 10)
+
+# reset
+convert_init_vel: True                            # [CHANGED] root velocity: origin (mocap) -> center of mass (Newton)
+
+# mocap height [CHANGED]: each clip shifted by foot_contact_height - its stance level (amp/foot_align.py)
+align_mocap_feet: True
+foot_contact_height: -0.013                       # m, lowest point of the feet in contact in the simulation (validation/check_foot_align.py, test 1: Walk -1.2, Locomotion -1.3, Run -1.7 cm)
+
+# goal and reward: DeepMimic's code, args/train_amp_target_humanoid3d_locomotion_args.txt and
+# SceneTargetAMP.cpp (amp/location_env.py). MimicKit's TaskLocationEnv keys:
+tar_speed: 1.0                                    # v*, minimum speed towards the target (m/s); with the gain: lowest v*
+tar_speed_dist_gain: 0.5                          # [vdist] v* = clamp(0.5 * d, 1, 3): 1 m/s up to 2 m from the target, 3 m/s from 6 m
+tar_speed_max: 3.0                                # [vdist] m/s
+tar_change_time_min: 5.0                          # s, new target every U(5, 10) s
+tar_change_time_max: 10.0
+tar_dist_min: 0.0                                 # m, target at U(0, 10) m from the root, random angle
+tar_dist_max: 10.0
+
+# task reward r_G = loc_pos_reward_w exp(-loc_pos_err_scale d^2) + loc_vel_reward_w r_vel
+# DeepMimic's code: 0.6, 0.4, 0.5, 4. The article's eq. 12 writes 0.7, 0.3, 0.5, 1.
+loc_pos_reward_w: 0.6
+loc_vel_reward_w: 0.4
+loc_pos_err_scale: 0.5
+loc_vel_err_scale: 4.0
+success_dist: 0.5                                 # m, r_vel = 1 within this distance of the target
+fail_dist: 15.0                                   # m, episode ends (failure) beyond this distance

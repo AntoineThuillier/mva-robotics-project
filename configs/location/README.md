@@ -46,5 +46,23 @@ python validation/eval_location.py --run_dir outputs/rl/amp_location_locomotion
 | AMP Run | cibles atteintes en courant ; à surveiller : dépassement ou cercles autour de la cible |
 | PPO seul | retour comparable (Fig. 5 : ~0,6), mouvement peu naturel |
 
+## v* fonction de la distance (`*_vdist_env.yaml`)
+
+Résultats des runs ci-dessus : `outputs/location/README.md`. Walk est satisfaisant, mais Run et
+Locomotion ne courent jamais vraiment (1,9 et 1,5 m/s au plus, quand les clips Run vont à
+2,4 m/s en médiane). Avec v* = 1 m/s, r_vel vaut déjà 1 à 1 m/s et exp(−0,5 d²) est nul au-delà de
+3 m : courir ne rapporte rien, et la politique prend l'allure la plus lente que D accepte.
+
+`run_vdist_env.yaml` et `locomotion_vdist_env.yaml` ajoutent `tar_speed_dist_gain: 0.5` et
+`tar_speed_max: 3.0` : v* = clamp(0,5 d, 1, 3), soit 1 m/s jusqu'à 2 m de la cible et 3 m/s au-delà
+de 6 m (d : distance racine-cible au début du pas). k_vel = 4 / v*² comme dans DeepMimic, donc
+r_vel ne dépend que du rapport v / v*. C'est un ajout par rapport à l'article : il demande
+explicitement « marcher près, courir loin ». Les `*_env.yaml` sans gain gardent v* = 1 m/s.
+
+```bash
+python rl/train.py --agent_config configs/location/amp_agent.yaml --env_config configs/location/locomotion_vdist_env.yaml --max_samples 2e8 --out_dir outputs/rl/amp_location_locomotion_vdist
+python rl/train.py --agent_config configs/location/amp_agent.yaml --env_config configs/location/run_vdist_env.yaml --max_samples 2e8 --out_dir outputs/rl/amp_location_run_vdist
+```
+
 `runs.sh` et `video_policy.py` sont écrits pour Target Heading : ne pas y ajouter ces runs pendant
 que `runs.sh` tourne (bash relit le script). Les vidéos Location sont à faire.

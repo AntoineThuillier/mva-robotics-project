@@ -17,10 +17,15 @@ article's numbers:
                      = 0 when the COM moves away from the target,
                      = exp(-k_vel max(0, v* - d*.v_com)^2) otherwise,
                v_com = mean COM velocity over the policy step, d* = horizontal unit vector from the
-               COM to the target, v* = 1 m/s (a minimum speed: moving faster is not penalized);
+               COM to the target, v* a minimum speed (moving faster is not penalized);
                r_G = 0 at a fall or beyond fail_dist.
-               DeepMimic's code: w_pos 0.6, w_vel 0.4, k_pos 0.5, k_vel 4 / v*^2 = 4.
-               The article's eq. 12 writes w_pos 0.7, w_vel 0.3, k_vel 1: set these in the config.
+               DeepMimic's code: w_pos 0.6, w_vel 0.4, k_pos 0.5, k_vel = 4 / v*^2, v* = 1 m/s.
+               The article's eq. 12 writes w_pos 0.7, w_vel 0.3, k_vel 1: set these in the config
+               (loc_vel_err_scale is the numerator: k_vel = loc_vel_err_scale / v*^2).
+    v*         fixed (tar_speed), or, when tar_speed_dist_gain > 0, growing with the distance to the
+               target at the start of the step: v* = clamp(gain * d, tar_speed, tar_speed_max)
+               (our addition: with v* = 1 m/s, running brings no reward, and the Run and Locomotion
+               policies never really run; configs/location/README.md).
                MimicKit: 0.5 / 0.4 + 0.1 facing term, root velocity.
     end        fall, 20 s, or the root more than fail_dist = 15 m from the target (failure)
 
@@ -64,6 +69,8 @@ class TaskLocationEnv(AMPEnvCommon, task_location_env.TaskLocationEnv):
         self._loc_vel_scale = float(env_config.get("loc_vel_err_scale", 4.0))
         self._success_dist = float(env_config.get("success_dist", 0.5))
         self._fail_dist = float(env_config.get("fail_dist", 15.0))
+        self._tar_speed_gain = float(env_config.get("tar_speed_dist_gain", 0.0))
+        self._tar_speed_max = float(env_config.get("tar_speed_max", env_config["tar_speed"]))
         super().__init__(env_config=env_config, engine_config=engine_config, num_envs=num_envs,
                          device=device, visualize=visualize, record_video=record_video)
         self._finish_common()
@@ -71,6 +78,7 @@ class TaskLocationEnv(AMPEnvCommon, task_location_env.TaskLocationEnv):
     def _build_sim_tensors(self, config):
         super()._build_sim_tensors(config)
         self._step_tar_pos = torch.zeros(self.get_num_envs(), 3, device=self._device)
+        self._step_tar_speed = torch.zeros(self.get_num_envs(), device=self._device)
 
     # ---------- observation: character state (MimicKit) + g ----------
     def _compute_obs(self, env_ids=None):
@@ -85,12 +93,14 @@ class TaskLocationEnv(AMPEnvCommon, task_location_env.TaskLocationEnv):
     def _pre_physics_step(self, actions):
         smp_env.SMPEnv._pre_physics_step(self, actions)       # skips MimicKit's root recording
         self._step_tar_pos[:] = self._tar_pos
+        dist = horizontal_dist(self._tar_pos, self._engine.get_root_pos(self._get_char_id()))
+        self._step_tar_speed[:] = compute_tar_speed(dist, self._tar_speed, self._tar_speed_max, self._tar_speed_gain)
 
     def _update_reward(self):
         com = self.calc_com()
         root_pos = self._engine.get_root_pos(self._get_char_id())
         self._reward_buf[:] = compute_location_reward(
-            root_pos, self._prev_com, com, self._step_tar_pos, self._tar_speed, self._engine.get_timestep(),
+            root_pos, self._prev_com, com, self._step_tar_pos, self._step_tar_speed, self._engine.get_timestep(),
             self._loc_pos_w, self._loc_vel_w, self._loc_pos_scale, self._loc_vel_scale, self._success_dist)
         self._prev_com[:] = com
 
@@ -109,6 +119,13 @@ def horizontal_dist(a, b):
     return torch.linalg.norm((a - b)[..., :2], dim=-1)
 
 
+def compute_tar_speed(dist, v_min, v_max, gain):
+    """v* = clamp(gain * dist, v_min, v_max); v_min when gain = 0. (...,)."""
+    if gain <= 0:
+        return torch.full_like(dist, v_min)
+    return torch.clamp(gain * dist, min=v_min, max=v_max)
+
+
 def compute_location_goal_obs(root_pos, root_rot, tar_pos):
     """g = (unit direction to the target in the heading frame (2), horizontal distance). (..., 3)."""
     delta = tar_pos - root_pos
@@ -121,13 +138,14 @@ def compute_location_goal_obs(root_pos, root_rot, tar_pos):
 
 def compute_location_reward(root_pos, prev_com, com, tar_pos, tar_speed, dt,
                             pos_w, vel_w, pos_scale, vel_scale, success_dist):
-    """r_G of DeepMimic's SceneTargetAMP.cpp (falls and fail distance are handled in _update_done). (...,)."""
+    """r_G of DeepMimic's SceneTargetAMP.cpp (falls and fail distance are handled in _update_done). (...,).
+    tar_speed: v*, a float or a tensor (...,); vel_scale is divided by v*^2 (DeepMimic: 4 / v*^2)."""
     pos_reward = torch.exp(-pos_scale * horizontal_dist(tar_pos, root_pos) ** 2)
 
     to_tar = (tar_pos - com)[..., :2]
     d = to_tar / torch.linalg.norm(to_tar, dim=-1, keepdim=True).clamp_min(1e-4)
     v = torch.sum(d * (com - prev_com)[..., :2], dim=-1) / dt          # mean COM speed towards the target
-    vel_reward = torch.exp(-vel_scale * torch.clamp_min(tar_speed - v, 0.0) ** 2)
+    vel_reward = torch.exp(-vel_scale / tar_speed ** 2 * torch.clamp_min(tar_speed - v, 0.0) ** 2)
     vel_reward = torch.where(v < 0, torch.zeros_like(vel_reward), vel_reward)
     near = horizontal_dist(tar_pos, root_pos) < success_dist
     vel_reward = torch.where(near, torch.ones_like(vel_reward), vel_reward)
